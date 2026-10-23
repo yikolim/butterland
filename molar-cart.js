@@ -2928,20 +2928,20 @@
     let flightDue = false;
     const flightReminder = () => {
       flightDue = false;
-      notice = { title: "FLIGHT", lines: ["Time to catch a flight!", "Boarding soon."], t: 0 };
+      notice = { title: "FLIGHT", lines: ["It's time!", "Time to catch the flight."], t: 0 };
       deliverySfx.notify();
       later(900, () => askDialog(
-        "CLAIRE",
-        ["\u2022Oh no, look at the time! I have a flight to catch.", "\u2022Save the game for now?"],
+        "",
+        ["\u2022Going somewhere fun!", "\u2022Save game?"],
         () => {
           writeSave();
-          openDialog("", ["\u2022Game saved. Have a good flight, Claire!"], () => fadeTo(() => {
+          openDialog("", ["\u2022To be continued..."], () => fadeTo(() => {
             scene = "title";
             dlg = null;
             opening.finish();
           }));
         },
-        () => openDialog("CLAIRE", ["\u2022Okay, just a little longer..."])
+        () => openDialog("", ["\u2022Okay, a little longer."])
       ));
     };
     const closePhone = () => {
