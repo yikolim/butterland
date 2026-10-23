@@ -208,6 +208,30 @@ canvas { display: block; width: calc(var(--u)*76); height: calc(var(--u)*57); im
 .ds.duo:not(.duo-row) .sys { padding-left: calc(var(--u)*2); }
 .ds.duo:not(.duo-row) .top .bezel { padding: calc(var(--u)*1.2); }
 .ds.duo:not(.duo-row) .top .glass { padding: calc(var(--u)*.7); }
+/* Duo depth, after the pink TinyMac-style foldables: the phone's dark body shows as a thin rim, and
+   each half is a raised pink panel with rounded corners, lit from above. The lid casts a shadow onto
+   the deck below the fold, the top screen sits in a thick black frame, and the controls stand up
+   off the deck like keycaps. */
+.ds.duo:not(.duo-row) { background: linear-gradient(180deg, #2b2428, #1b1619); }
+.ds.duo:not(.duo-row) .shell { position: relative; isolation: isolate; }
+.ds.duo:not(.duo-row) .top {
+  margin: calc(var(--u)*1.6) calc(var(--u)*1.6) calc(var(--u)*1.2); border-radius: calc(var(--u)*7) calc(var(--u)*7) calc(var(--u)*4) calc(var(--u)*4); z-index: 2;
+  background: linear-gradient(180deg, #fbe2e1 0%, var(--shell) 30%, #eab8ba 85%, #dda5a9 100%);
+  box-shadow: inset 0 calc(var(--u)*.7) 0 rgba(255,255,255,.75), inset 0 calc(var(--u)*-1) 0 #c98f94, inset calc(var(--u)*.6) 0 0 rgba(255,255,255,.35), inset calc(var(--u)*-.6) 0 0 rgba(170,100,108,.35),
+    0 calc(var(--u)*2.2) calc(var(--u)*2.6) rgba(10,4,8,.6), 0 calc(var(--u)*.6) calc(var(--u)*.6) rgba(10,4,8,.45); }
+.ds.duo:not(.duo-row) .bottom {
+  margin: calc(var(--u)*1.2) calc(var(--u)*1.6) calc(var(--u)*1.6); border-radius: calc(var(--u)*4) calc(var(--u)*4) calc(var(--u)*7) calc(var(--u)*7);
+  background: linear-gradient(180deg, #cf979c 0%, #e7b3b6 9%, var(--shell) 22%, var(--shell) 80%, #f6d3d3 100%);
+  box-shadow: inset 0 calc(var(--u)*3.5) calc(var(--u)*3.5) rgba(95,38,48,.38), inset 0 calc(var(--u)*-.7) 0 rgba(255,255,255,.55), inset calc(var(--u)*.6) 0 0 rgba(255,255,255,.3), inset calc(var(--u)*-.6) 0 0 rgba(170,100,108,.3),
+    0 calc(var(--u)*1.2) calc(var(--u)*1.6) rgba(10,4,8,.5); }
+/* the fold: a dark groove between the two panels */
+.ds.duo:not(.duo-row) .barrel { background: linear-gradient(180deg, #120e10, #3a3035 45%, #1a1416); box-shadow: inset 0 calc(var(--u)*.3) calc(var(--u)*.4) rgba(0,0,0,.6); }
+.ds.duo:not(.duo-row) .knuckle { box-shadow: 0 calc(var(--u)*.8) calc(var(--u)*1) rgba(10,4,8,.45), inset 0 calc(var(--u)*.4) 0 rgba(255,255,255,.6); }
+/* screens: a pink recess, then a thick rounded black frame */
+.ds.duo:not(.duo-row) .bezel { background: linear-gradient(180deg, #e0a9ad, #f1c8c9); box-shadow: inset 0 calc(var(--u)*1) calc(var(--u)*1.4) rgba(100,40,50,.5), 0 calc(var(--u)*.45) 0 rgba(255,255,255,.7), 0 calc(var(--u)*-.35) calc(var(--u)*.5) rgba(120,55,62,.3); }
+.ds.duo:not(.duo-row) .glass { background: #121013; border-radius: calc(var(--u)*2); padding: calc(var(--u)*1.6); box-shadow: inset 0 calc(var(--u)*.7) calc(var(--u)*1.2) rgba(0,0,0,.85), inset 0 calc(var(--u)*-.3) 0 rgba(255,255,255,.12); }
+.ds.duo:not(.duo-row) canvas { border-radius: calc(var(--u)*.6); }
+.ds.duo:not(.duo-row) .dpad-wrap, .ds.duo:not(.duo-row) .face { filter: drop-shadow(0 calc(var(--u)*1.2) calc(var(--u)*1)  rgba(90,32,42,.45)); }
 @media (prefers-reduced-motion: reduce) { .dpad, .btn, .pill { transition: none; } }
 </style>
 
