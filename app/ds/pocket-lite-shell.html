@@ -192,6 +192,17 @@ canvas { display: block; width: calc(var(--u)*76); height: calc(var(--u)*57); im
 .ds.duo:not(.duo-row) .sys { padding-left: calc(var(--u)*2); }
 .ds.duo:not(.duo-row) .top .bezel { padding: calc(var(--u)*1.2); }
 .ds.duo:not(.duo-row) .top .glass { padding: calc(var(--u)*.7); }
+/* Duo depth: the flat full-screen halves get light from above, darker rims, a soft shadow on
+   either side of the hinge, deeper screen recesses and buttons that sit up off the shell. */
+.ds.duo:not(.duo-row) .shell { position: relative; isolation: isolate; }
+.ds.duo:not(.duo-row) .top { box-shadow: inset 0 calc(var(--u)*.6) 0 rgba(255,255,255,.6), inset 0 0 calc(var(--u)*9) rgba(140,70,80,.5), inset 0 calc(var(--u)*-6) calc(var(--u)*6) rgba(110,48,56,.42); }
+.ds.duo:not(.duo-row) .bottom { box-shadow: inset 0 calc(var(--u)*6) calc(var(--u)*6) rgba(110,48,56,.45), inset 0 0 calc(var(--u)*9) rgba(140,70,80,.5), inset 0 calc(var(--u)*-.8) 0 var(--shell-edge); }
+.ds.duo:not(.duo-row) .shell::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 0%, rgba(255,255,255,.18), transparent 55%), linear-gradient(90deg, rgba(110,50,58,.26), transparent 14%, transparent 86%, rgba(110,50,58,.26)); }
+.ds.duo:not(.duo-row) .hinge { filter: drop-shadow(0 calc(var(--u)*1.6) calc(var(--u)*1.8) rgba(80,30,36,.55)) drop-shadow(0 calc(var(--u)*-.8) calc(var(--u)*1.2) rgba(80,30,36,.35)); }
+.ds.duo:not(.duo-row) .bezel { box-shadow: inset 0 calc(var(--u)*.9) calc(var(--u)*1.4) rgba(100,45,52,.5), inset 0 calc(var(--u)*-.3) calc(var(--u)*.5) rgba(255,255,255,.35), 0 calc(var(--u)*.4) 0 rgba(255,255,255,.65), 0 calc(var(--u)*-.3) calc(var(--u)*.6) rgba(120,60,66,.25); }
+.ds.duo:not(.duo-row) .glass { box-shadow: inset 0 calc(var(--u)*.6) calc(var(--u)*1) rgba(0,0,0,.55); }
+.ds.duo:not(.duo-row) .dpad-wrap, .ds.duo:not(.duo-row) .face { filter: drop-shadow(0 calc(var(--u)*1.1) calc(var(--u)*1.1) rgba(90,38,45,.45)); }
 @media (prefers-reduced-motion: reduce) { .dpad, .btn, .pill { transition: none; } }
 </style>
 
