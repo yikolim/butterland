@@ -25,7 +25,8 @@ export type Obj={t:ObjType;x:number;y:number;w?:number;h?:number;say?:string[];t
 export type CatBehavior="elegant"|"zoomies"|"hide";
 // `room` keeps a cat inside one area of its floor (tile units, painting coordinates).
 export type CatRoom={x0:number;y0:number;x1:number;y1:number};
-export type CatDef={name:string;floor:number;x:number;y:number;sheet:string;behavior:CatBehavior;lines:string[];room?:CatRoom};
+// `bolt` replaces the usual line when the cat runs away from a pet.
+export type CatDef={name:string;floor:number;x:number;y:number;sheet:string;behavior:CatBehavior;lines:string[];bolt?:string;room?:CatRoom};
 // `art` is a painted picture of the whole floor; when set it replaces the procedural tiles and
 // furniture, and walkability is read from its pixels.
 // `painted` holds the corrections for a painted floor (see paintedWalk.ts).
@@ -196,7 +197,8 @@ export const CATS:CatDef[]=[
  {name:"Ollie",floor:2,x:30,y:16,sheet:"/sprite-sheets/ollie-walk.png",behavior:"hide",
   lines:["•Two eyes peer out from behind the furniture.","•Ollie has inspected this spot. It is a good spot.","•He found the basement. He is not coming back up."]},
  {name:"Sashi",floor:1,x:36,y:12.5,sheet:"/sprite-sheets/sashi-walk.png",behavior:"hide",
-  lines:["•Sashi looks up from Claire's letters.","•...Chirp. The handwriting is acceptable.","•She returns to her hiding place with great dignity."]}
+  lines:["•Sashi looks up from Claire's letters.","•...Chirp. The handwriting is acceptable.","•She returns to her hiding place with great dignity."],
+  bolt:"•Sashi no want pet, Sashi want big boobies."}
 ];
 
 // Where Claire stands after stepping through the front door.

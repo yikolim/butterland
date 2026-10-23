@@ -10,7 +10,7 @@ import {nearestFree} from "./motion";
 // furniture is depth-sorted in front, so only the head shows), hidden waits, unhide steps back out.
 export type CatMode="wander"|"dash"|"toHide"|"tuck"|"hidden"|"unhide";
 export type Cat={name:string;floor:number;x:number;y:number;tx:number;ty:number;facing:"left"|"right";frame:number;resting:boolean;rest:number;clock:number;lines:string[];
- sheet:string;behavior:CatBehavior;mode:CatMode;dashes:number;hideAt:HideSpot|null;ghost:boolean;peek:number;placed:boolean;room?:CatRoom};
+ sheet:string;bolt?:string;behavior:CatBehavior;mode:CatMode;dashes:number;hideAt:HideSpot|null;ghost:boolean;peek:number;placed:boolean;room?:CatRoom};
 export type Effect={x:number;y:number;kind:"heart"|"alert";ttl:number;cat:Cat};
 export type FreeFn=(f:BuiltFloor,x:number,y:number,hw:number)=>boolean;
 
@@ -146,7 +146,7 @@ export function petCat(cat:Cat,f:BuiltFloor,free:FreeFn,claireX:number,effects:E
   cat.ghost=false;cat.hideAt=null;cat.mode="dash";cat.dashes=0;
   if(pickTarget(cat,f,free,3)){cat.resting=false;cat.clock=0}else startRest(cat,2,3);
  }
- return{likes,name:"",pages:[`•${cat.name} was not ready for that. ${cat.name} runs away!`]};
+ return{likes,name:"",pages:[cat.bolt??`•${cat.name} was not ready for that. ${cat.name} runs away!`]};
 }
 
 export function tickEffects(effects:Effect[],dt:number){
