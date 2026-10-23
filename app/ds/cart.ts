@@ -291,10 +291,10 @@ export function createMolarQuest(DS:DSApi){
  let flightDue=false;
  const flightReminder=()=>{
   flightDue=false;
-  notice={title:"FLIGHT",lines:["Time to catch a flight!","Boarding soon."],t:0};deliverySfx.notify();
-  later(900,()=>askDialog("CLAIRE",["•Oh no, look at the time! I have a flight to catch.","•Save the game for now?"],
-   ()=>{writeSave();openDialog("",["•Game saved. Have a good flight, Claire!"],()=>fadeTo(()=>{scene="title";dlg=null;opening.finish()}))},
-   ()=>openDialog("CLAIRE",["•Okay, just a little longer..."])));
+  notice={title:"FLIGHT",lines:["Check-in is open.","Head to the airport."],t:0};deliverySfx.notify();
+  later(900,()=>askDialog("",["•Where to?","•Save the game for now?"],
+   ()=>{writeSave();openDialog("",["•To be continued..."],()=>fadeTo(()=>{scene="title";dlg=null;opening.finish()}))},
+   ()=>openDialog("",["•Okay, a little longer."])));
  };
  const closePhone=()=>{
   if(!phoneOpen||!phoneLayer||!phoneFrame)return;
