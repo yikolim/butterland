@@ -217,25 +217,30 @@ canvas { display: block; width: calc(var(--u)*76); height: calc(var(--u)*57); im
 .ds.duo:not(.duo-row) canvas { border-radius: calc(var(--u)*.6); }
 .ds.duo:not(.duo-row) .dpad-wrap, .ds.duo:not(.duo-row) .face { filter: drop-shadow(0 calc(var(--u)*1.2) calc(var(--u)*1)  rgba(90,32,42,.45)); }
 /* ---------- closed lid: what the folded phone's small outer screen shows ----------
-   The outside of the 2DS lid on the dark phone body. Unfolding the phone (or tapping) opens it. */
+   The back of a pink 3DS XL lid: plain glossy pink, a white hinge bar across the top with a small
+   light at its end, and two camera lenses near the bottom edge. Unfolding the phone (or tapping) opens it. */
 .lid { position: fixed; inset: 0; z-index: 60; display: none; background: linear-gradient(180deg, #2b2428, #1b1619); perspective: 900px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .lid.show { display: block; }
 .lid-face { position: absolute; inset: max(10px, env(safe-area-inset-top, 0px)) max(10px, env(safe-area-inset-right, 0px)) max(10px, env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left, 0px));
-  border-radius: 34px 34px 22px 22px; transform-origin: 50% 100%; transition: transform .5s cubic-bezier(.5,0,.7,.4), opacity .5s;
-  background: radial-gradient(130% 80% at 30% 0%, rgba(255,255,255,.45), transparent 50%), linear-gradient(165deg, #fbe2e1 0%, var(--shell) 35%, #eab8ba 80%, #d9a0a5 100%);
-  box-shadow: inset 0 3px 0 rgba(255,255,255,.75), inset 0 -5px 0 #c98f94, inset 3px 0 0 rgba(255,255,255,.35), inset -3px 0 0 rgba(170,100,108,.35), inset 0 0 40px rgba(150,80,88,.35), 0 10px 22px rgba(0,0,0,.55);
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4vmin; overflow: hidden; }
-.lid.opening .lid-face { transform: rotateX(-88deg); opacity: 0; }
-.lid-logo { font: 400 clamp(18px, 7.2vmin, 40px)/1 "Press Start 2P", monospace; color: #ffd84a; letter-spacing: .04em;
-  text-shadow: 0 2px 0 #e08a1e, 2px 0 0 #4a2a12, -2px 0 0 #4a2a12, 0 -2px 0 #4a2a12, 0 4px 0 #4a2a12, 2px 4px 0 #4a2a12, -2px 4px 0 #4a2a12; }
-.lid-badge { width: clamp(64px, 24vmin, 140px); aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
-  background: radial-gradient(circle at 50% 35%, #fff4f3, #f3c9ca 70%, #dfa6aa); box-shadow: inset 0 3px 6px rgba(120,55,62,.35), 0 2px 0 rgba(255,255,255,.8), 0 -1px 2px rgba(120,55,62,.3); }
-.lid-badge img { width: 72%; image-rendering: pixelated; }
-.lid-tag { font: 700 clamp(10px, 3vmin, 14px) var(--font-label); letter-spacing: .3em; color: #a86a70; text-transform: uppercase; }
-.lid-led { position: absolute; right: 9%; bottom: 7%; width: 10px; height: 10px; border-radius: 50%; background: var(--led); box-shadow: 0 0 8px var(--led); }
-.lid-hinge { position: absolute; left: 12%; right: 12%; bottom: 0; height: 14px; border-radius: 7px 7px 0 0; background: linear-gradient(180deg, #d7a0a4, #b98587); box-shadow: inset 0 2px 0 rgba(255,255,255,.5); }
-.lid-hint { position: absolute; bottom: 9%; left: 0; right: 0; text-align: center; font: 500 clamp(10px, 3vmin, 13px) var(--font-label); color: #9b6a70; letter-spacing: .08em; animation: lidpulse 2.2s ease-in-out infinite; }
-@keyframes lidpulse { 50% { opacity: .35; } }
+  border-radius: 18px 18px 30px 30px; transform-origin: 50% 0%; transition: transform .5s cubic-bezier(.5,0,.7,.4), opacity .5s; overflow: hidden;
+  background:
+    linear-gradient(115deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,.18) 22%, transparent 38%),
+    radial-gradient(140% 70% at 50% 110%, rgba(170,95,105,.28), transparent 60%),
+    linear-gradient(180deg, #f6d2d5 0%, #f1c3c8 40%, #ebb6bd 85%, #e3a9b1 100%);
+  box-shadow: inset 0 -4px 0 rgba(200,140,148,.8), inset 3px 0 0 rgba(255,255,255,.35), inset -3px 0 0 rgba(190,120,130,.35), 0 10px 22px rgba(0,0,0,.55); }
+.lid.opening .lid-face { transform: rotateX(88deg); opacity: 0; }
+.lid-hinge { position: absolute; left: 0; right: 0; top: 0; height: clamp(26px, 9vmin, 46px); border-radius: 18px 18px 6px 6px;
+  background: linear-gradient(180deg, #ffffff 0%, #f4f2f2 45%, #dcd8d9 100%); box-shadow: 0 2px 4px rgba(120,70,80,.35), inset 0 -2px 0 rgba(160,150,152,.6); }
+.lid-hinge::before, .lid-hinge::after { content: ""; position: absolute; top: 12%; bottom: 12%; width: 7%; border-radius: 40%; background: linear-gradient(180deg, #fafafa, #e2dfe0); box-shadow: inset 0 0 0 1px rgba(150,140,142,.35); }
+.lid-hinge::before { left: 2%; }
+.lid-hinge::after { right: 2%; }
+.lid-led { position: absolute; right: 4.5%; top: 50%; width: 5px; height: 9px; transform: translateY(-50%); border-radius: 3px; background: #5a4a4e; z-index: 1; }
+.lid-cams { position: absolute; left: 50%; bottom: 7%; transform: translateX(-50%); display: flex; gap: clamp(28px, 16vmin, 70px); align-items: center; }
+.lid-cam { width: clamp(16px, 6vmin, 28px); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 38% 35%, #6a6a78 0 12%, #121216 30%, #050506 70%);
+  box-shadow: 0 0 0 clamp(2px, .8vmin, 4px) #2a2226, 0 1px 0 clamp(3px, 1vmin, 5px) rgba(255,255,255,.45); }
+.lid-dot { position: absolute; left: calc(50% + clamp(28px, 13vmin, 60px)); bottom: 7.6%; width: 3px; height: 3px; border-radius: 50%; background: #7a5a60; }
+.lid-hint { position: absolute; top: 46%; left: 0; right: 0; text-align: center; font: 500 clamp(10px, 3vmin, 13px) var(--font-label); color: rgba(150,90,100,.55); letter-spacing: .1em; animation: lidpulse 2.4s ease-in-out infinite; }
+@keyframes lidpulse { 50% { opacity: .25; } }
 @media (prefers-reduced-motion: reduce) { .lid-face { transition: none; } .lid-hint { animation: none; } }
 @media (prefers-reduced-motion: reduce) { .dpad, .btn, .pill { transition: none; } }
 </style>
@@ -284,12 +289,10 @@ canvas { display: block; width: calc(var(--u)*76); height: calc(var(--u)*57); im
 </div>
 <div class="lid" id="lid" role="button" aria-label="Open Butterland">
   <div class="lid-face">
-    <div class="lid-logo">BUTTERLAND</div>
-    <div class="lid-badge"><img src="../phone/claire-head.png" alt=""></div>
-    <div class="lid-tag">a cozy little game</div>
+    <div class="lid-hinge"><div class="lid-led"></div></div>
     <div class="lid-hint">unfold or tap to open</div>
-    <div class="lid-led"></div>
-    <div class="lid-hinge"></div>
+    <div class="lid-cams"><div class="lid-cam"></div><div class="lid-cam"></div></div>
+    <div class="lid-dot"></div>
   </div>
 </div>
 <div class="hint">Keyboard: arrows · X = A · Z = B · S = X · A = Y · Q/W = L/R · Enter = Start · Shift = Select</div>
