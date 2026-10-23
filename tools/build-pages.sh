@@ -19,7 +19,9 @@ for a in assets:
     shutil.copy(f"public/{a}", f"site/{a}")
 cart = cart.replace('"../phone/?embed&duo"', '"./phone/?embed&duo"')
 open("site/molar-cart.js", "w").write(cart)
-shutil.copy("public/pocket/index.html", "site/index.html")
+page = open("public/pocket/index.html").read().replace('"../icons/', '"./icons/')
+open("site/index.html", "w").write(page)
+shutil.copytree("public/icons", "site/icons")
 os.makedirs("site/phone")
 for f in ("index.html", "claire-head.png"):
     shutil.copy(f"public/phone/{f}", f"site/phone/{f}")

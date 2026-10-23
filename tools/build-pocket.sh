@@ -22,12 +22,14 @@ head='''<!doctype html>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Butterland">
 <meta name="theme-color" content="#efc3c3">
+<link rel="icon" type="image/png" sizes="512x512" href="../icons/claire-512.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/claire-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../icons/claire-180.png">
 <style>html,body{margin:0;overscroll-behavior:none}</style>
 </head>
 <body>
 '''
 body=src[:start]+'<script src="./molar-cart.js"></script>'+src[end:]
-body=body.replace("<title>Pocket Lite</title>","<title>Butterland — Pocket Lite</title>")
 open("public/pocket/index.html","w").write(head+body+"</body></html>\n")
 print("public/pocket/index.html")
 PY
