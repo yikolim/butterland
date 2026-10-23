@@ -236,10 +236,10 @@ canvas { display: block; width: calc(var(--u)*76); height: calc(var(--u)*57); im
 .lid-hinge::after { right: 2%; }
 .lid-led { position: absolute; right: 4.5%; top: 50%; width: 5px; height: 9px; transform: translateY(-50%); border-radius: 3px; background: #5a4a4e; z-index: 1; }
 .lid.opening .lid-turn .lid-face { transform: rotateX(88deg); opacity: 0; }
-/* The lid is landscape like the real handheld (hinge along the long top edge). On a portrait
-   screen the whole lid is turned a quarter so it still fills the screen. */
-.lid-turn { position: absolute; left: 50%; top: 50%; width: 100vw; height: 100vh; transform: translate(-50%, -50%); }
-@media (orientation: portrait) { .lid-turn { width: 100vh; height: 100vw; transform: translate(-50%, -50%) rotate(90deg); } }
+/* The lid is landscape like the real handheld, turned so the hinge runs along the bottom edge (as
+   it sits on the folded phone). On a portrait screen it is turned a quarter more to fill the screen. */
+.lid-turn { position: absolute; left: 50%; top: 50%; width: 100vw; height: 100vh; transform: translate(-50%, -50%) rotate(180deg); }
+@media (orientation: portrait) { .lid-turn { width: 100vh; height: 100vw; transform: translate(-50%, -50%) rotate(-90deg); } }
 @media (prefers-reduced-motion: reduce) { .lid-face { transition: none; } }
 @media (prefers-reduced-motion: reduce) { .dpad, .btn, .pill { transition: none; } }
 </style>
