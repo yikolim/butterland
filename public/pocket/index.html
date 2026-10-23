@@ -234,7 +234,7 @@ canvas { display: block; width: calc(var(--u)*76); height: calc(var(--u)*57); im
 .ds.duo:not(.duo-row) .dpad-wrap, .ds.duo:not(.duo-row) .face { filter: drop-shadow(0 calc(var(--u)*1.2) calc(var(--u)*1)  rgba(90,32,42,.45)); }
 /* ---------- closed lid: what the folded phone's small outer screen shows ----------
    The back of a pink 3DS XL lid: plain glossy pink, a white hinge bar across the top with a small
-   light at its end, and two camera lenses near the bottom edge. Unfolding the phone (or tapping) opens it. */
+   light at its end. Unfolding the phone (or tapping) opens it. */
 .lid { position: fixed; inset: 0; z-index: 60; display: none; background: linear-gradient(180deg, #2b2428, #1b1619); perspective: 900px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .lid.show { display: block; }
 .lid-face { position: absolute; inset: max(10px, env(safe-area-inset-top, 0px)) max(10px, env(safe-area-inset-right, 0px)) max(10px, env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left, 0px));
@@ -251,10 +251,6 @@ canvas { display: block; width: calc(var(--u)*76); height: calc(var(--u)*57); im
 .lid-hinge::before { left: 2%; }
 .lid-hinge::after { right: 2%; }
 .lid-led { position: absolute; right: 4.5%; top: 50%; width: 5px; height: 9px; transform: translateY(-50%); border-radius: 3px; background: #5a4a4e; z-index: 1; }
-.lid-cams { position: absolute; left: 50%; bottom: 7%; transform: translateX(-50%); display: flex; gap: clamp(28px, 16vmin, 70px); align-items: center; }
-.lid-cam { width: clamp(16px, 6vmin, 28px); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 38% 35%, #6a6a78 0 12%, #121216 30%, #050506 70%);
-  box-shadow: 0 0 0 clamp(2px, .8vmin, 4px) #2a2226, 0 1px 0 clamp(3px, 1vmin, 5px) rgba(255,255,255,.45); }
-.lid-dot { position: absolute; left: calc(50% + clamp(28px, 13vmin, 60px)); bottom: 7.6%; width: 3px; height: 3px; border-radius: 50%; background: #7a5a60; }
 .lid.opening .lid-turn .lid-face { transform: rotateX(88deg); opacity: 0; }
 /* The lid is landscape like the real handheld (hinge along the long top edge). On a portrait
    screen the whole lid is turned a quarter so it still fills the screen. */
@@ -309,8 +305,6 @@ canvas { display: block; width: calc(var(--u)*76); height: calc(var(--u)*57); im
 <div class="lid" id="lid" role="button" aria-label="Open Butterland">
   <div class="lid-turn"><div class="lid-face">
     <div class="lid-hinge"><div class="lid-led"></div></div>
-    <div class="lid-cams"><div class="lid-cam"></div><div class="lid-cam"></div></div>
-    <div class="lid-dot"></div>
   </div></div>
 </div>
 <div class="hint">Keyboard: arrows · X = A · Z = B · S = X · A = Y · Q/W = L/R · Enter = Start · Shift = Select</div>
