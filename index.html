@@ -322,7 +322,7 @@ canvas { display: block; width: calc(var(--u)*76); height: calc(var(--u)*57); im
       const ah = shell.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
       // keep clear of the hinge strip (and the shoulder tabs when they're shown)
       // Held tall the top screen nearly fills its half; the touch screen keeps room for the controls.
-      const fw = row ? 0.86 : isTop ? 0.97 : 0.9, fh = row ? 0.84 : isTop ? 0.93 : 0.86;
+      const fw = row ? 0.86 : isTop ? 0.88 : 0.9, fh = row ? 0.84 : isTop ? 0.93 : 0.86;
       const u = 4 * Math.min(aw * fw / r.width, ah * fh / r.height);
       shell.style.setProperty("--u", u + "px");
       uMin = Math.min(uMin, u);
