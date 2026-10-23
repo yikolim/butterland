@@ -157,6 +157,24 @@ export function createMolarQuest(DS:DSApi){
 
  const snapCamera=()=>{const f=floors[floorIndex];cam.x=Math.max(0,Math.min(f.w*T-W,claire.x*T-W/2));cam.y=Math.max(0,Math.min(f.h*T-H,claire.y*T-H/2))};
 
+ /* haptics: navigator.vibrate where the browser has it (Android). iPhone Safari has no vibrate,
+    but toggling a hidden switch-style checkbox gives a light tap there (iOS 18 and later), one per
+    pulse. Phones that support neither simply stay still. */
+ let tapSwitch:HTMLLabelElement|null=null;
+ const iosTap=()=>{
+  try{
+   if(!tapSwitch){
+    tapSwitch=document.createElement("label");tapSwitch.style.cssText="position:fixed;left:-99px;top:0;opacity:0;pointer-events:none";
+    const box=document.createElement("input");box.type="checkbox";box.setAttribute("switch","");tapSwitch.appendChild(box);document.body.appendChild(tapSwitch);
+   }
+   tapSwitch.click();
+  }catch{/* no haptics */}
+ };
+ const haptic=(pattern:number[])=>{
+  if(typeof navigator.vibrate==="function"){try{navigator.vibrate(pattern);return}catch{/* fall through */}}
+  let at=0;pattern.forEach((ms,i)=>{if(i%2===0)later(at,iosTap);at+=ms});
+ };
+
  /* dialog */
  const openDialog=(name:string,pages:string[],then?:()=>void)=>{dlg={name,pages,page:0,shown:reduceMotion?pages[0].length:0,done:reduceMotion,clock:0,then};claire.moving=false;claire.frame=1;out.moving=false;out.frame=1};
  const advanceDialog=()=>{
@@ -259,6 +277,7 @@ export function createMolarQuest(DS:DSApi){
    ()=>openDialog("CLAIRE",["•Maybe in a bit. I'll leave it by the gate for now."]));
  };
  const finishUnboxing=()=>{
+  haptic([40,60,40,60,120]);   // quest complete: a new phone
   delivery="done";bgmDuck(false);out.dir="down";
   openDialog("CLAIRE",["•An iPhone Duo! It unfolds into two screens!","•It's already paired with the Tesla parked by the house.","•Let's walk over to the car and try it with the Tesla!"],
   );
@@ -687,8 +706,8 @@ export function createMolarQuest(DS:DSApi){
    if(scene==="outside"&&!busy&&!dlg&&delivery!=="unboxing")updateOutside(dt);
    if(delivery==="unboxing"&&!dlg){
     const before=unboxT;if(!unboxHold)unboxT+=dt;
-    if(before<UNBOX.BANNER_START&&unboxT>=UNBOX.BANNER_START){bgmDuck(true);deliverySfx.fanfare()}
-    if(before<UNBOX.DANCE_START&&unboxT>=UNBOX.DANCE_START)deliverySfx.danceTune();
+    if(before<UNBOX.BANNER_START&&unboxT>=UNBOX.BANNER_START){bgmDuck(true);deliverySfx.fanfare();haptic([60,80,60,80,200])}
+    if(before<UNBOX.DANCE_START&&unboxT>=UNBOX.DANCE_START){deliverySfx.danceTune();haptic(Array.from({length:16},(_,i)=>i%2?150:30))}   // a tap on every beat
     if(unboxT>=UNBOX.END)finishUnboxing();
    }
    // After the last cat: ring the doorbell, then run the van cutscene once the dialog is read.
@@ -723,7 +742,7 @@ export function createMolarQuest(DS:DSApi){
       }
       foundCats.add(cat.name);say(`FOUND ${cat.name.toUpperCase()}!`);meow(cat,true,true)
      }
-     if(foundCats.size===cats.length&&!dlg){countDone=true;openDialog("",["•All four cats accounted for!","•Michael, Aggu, Ollie and Sashi. Nobody is stuck in the dryer."])}
+     if(foundCats.size===cats.length&&!dlg){countDone=true;haptic([40,60,40,60,120]);openDialog("",["•All four cats accounted for!","•Michael, Aggu, Ollie and Sashi. Nobody is stuck in the dryer."])}
     }
     const f=floors[floorIndex];
     const targetX=Math.max(0,Math.min(f.w*T-W,claire.x*T-W/2)),targetY=Math.max(0,Math.min(f.h*T-H,claire.y*T-H/2));

@@ -2684,6 +2684,36 @@
       cam.x = Math.max(0, Math.min(f.w * T - W, claire.x * T - W / 2));
       cam.y = Math.max(0, Math.min(f.h * T - H, claire.y * T - H / 2));
     };
+    let tapSwitch = null;
+    const iosTap = () => {
+      try {
+        if (!tapSwitch) {
+          tapSwitch = document.createElement("label");
+          tapSwitch.style.cssText = "position:fixed;left:-99px;top:0;opacity:0;pointer-events:none";
+          const box2 = document.createElement("input");
+          box2.type = "checkbox";
+          box2.setAttribute("switch", "");
+          tapSwitch.appendChild(box2);
+          document.body.appendChild(tapSwitch);
+        }
+        tapSwitch.click();
+      } catch {
+      }
+    };
+    const haptic = (pattern) => {
+      if (typeof navigator.vibrate === "function") {
+        try {
+          navigator.vibrate(pattern);
+          return;
+        } catch {
+        }
+      }
+      let at = 0;
+      pattern.forEach((ms, i) => {
+        if (i % 2 === 0) later(at, iosTap);
+        at += ms;
+      });
+    };
     const openDialog = (name, pages, then) => {
       dlg = { name, pages, page: 0, shown: reduceMotion ? pages[0].length : 0, done: reduceMotion, clock: 0, then };
       claire.moving = false;
@@ -2883,6 +2913,7 @@
       );
     };
     const finishUnboxing = () => {
+      haptic([40, 60, 40, 60, 120]);
       delivery = "done";
       bgmDuck(false);
       out.dir = "down";
@@ -3539,8 +3570,12 @@
           if (before < UNBOX.BANNER_START && unboxT >= UNBOX.BANNER_START) {
             bgmDuck(true);
             deliverySfx.fanfare();
+            haptic([60, 80, 60, 80, 200]);
           }
-          if (before < UNBOX.DANCE_START && unboxT >= UNBOX.DANCE_START) deliverySfx.danceTune();
+          if (before < UNBOX.DANCE_START && unboxT >= UNBOX.DANCE_START) {
+            deliverySfx.danceTune();
+            haptic(Array.from({ length: 16 }, (_, i) => i % 2 ? 150 : 30));
+          }
           if (unboxT >= UNBOX.END) finishUnboxing();
         }
         if (countDone && delivery === "none" && !dlg && !busy && scene === "inside") {
@@ -3591,6 +3626,7 @@
             }
             if (foundCats.size === cats.length && !dlg) {
               countDone = true;
+              haptic([40, 60, 40, 60, 120]);
               openDialog("", ["\u2022All four cats accounted for!", "\u2022Michael, Aggu, Ollie and Sashi. Nobody is stuck in the dryer."]);
             }
           }
