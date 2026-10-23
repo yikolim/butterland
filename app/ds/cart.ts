@@ -109,7 +109,8 @@ export function createMolarQuest(DS:DSApi){
  const bgm=new Audio("/music/kuruma-de-ds.mp3");bgm.loop=true;bgm.volume=MUSIC;bgm.preload="auto";
  // Quieter music while the celebration plays over it.
  const bgmDuck=(on:boolean)=>{bgm.volume=on?MUSIC*.23:MUSIC};
- const syncMusic=()=>{if(soundOn)void bgm.play().catch(()=>{});else bgm.pause()};
+ let bgmStarted=false;   // the music has been started once (it only starts after a press or tap)
+ const syncMusic=()=>{bgmStarted=true;if(soundOn)void bgm.play().catch(()=>{});else bgm.pause()};
  const setSound=(on:boolean)=>{soundOn=on;try{localStorage.setItem("molar-sound",on?"on":"off")}catch{/* storage blocked */}syncMusic()};
  const rawMeow=makeMeow();
  const meow:typeof rawMeow=(cat,happy,little)=>{if(soundOn)rawMeow(cat,happy,little)};
@@ -668,6 +669,11 @@ export function createMolarQuest(DS:DSApi){
  }
 
  /* ---- game object for the shell ---- */
+ let lidClosed=!!document.getElementById("lid")?.classList.contains("show");
+ addEventListener("ds-lid",e=>{
+  lidClosed=!(e as CustomEvent<{open:boolean}>).detail.open;
+  if(lidClosed)bgm.pause();else if(soundOn&&bgmStarted)syncMusic();
+ });
  const game={
   init(){
    DS.on("down",(b:never)=>{
@@ -697,6 +703,9 @@ export function createMolarQuest(DS:DSApi){
    });
   },
   update(dt:number){
+   // Closed lid (the folded phone): the game sleeps. It boots from the splash the first time the
+   // lid opens, and later closes simply pause it until it opens again.
+   if(lidClosed)return;
    elapsed+=dt;
    // The world waits while Claire looks at her phone; only the notice on the top screen keeps time.
    if(phoneOpen){if(notice){notice.t+=dt;if(notice.t>=NOTICE_LEN)notice=null}return}

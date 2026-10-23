@@ -2615,7 +2615,9 @@
     const bgmDuck = (on) => {
       bgm.volume = on ? MUSIC * 0.23 : MUSIC;
     };
+    let bgmStarted = false;
     const syncMusic = () => {
+      bgmStarted = true;
       if (soundOn) void bgm.play().catch(() => {
       });
       else bgm.pause();
@@ -3487,6 +3489,12 @@
         }
       };
     }
+    let lidClosed = !!document.getElementById("lid")?.classList.contains("show");
+    addEventListener("ds-lid", (e) => {
+      lidClosed = !e.detail.open;
+      if (lidClosed) bgm.pause();
+      else if (soundOn && bgmStarted) syncMusic();
+    });
     const game = {
       init() {
         DS.on("down", (b) => {
@@ -3552,6 +3560,7 @@
         });
       },
       update(dt) {
+        if (lidClosed) return;
         elapsed += dt;
         if (phoneOpen) {
           if (notice) {

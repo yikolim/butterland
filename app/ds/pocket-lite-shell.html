@@ -399,8 +399,10 @@ canvas { display: block; width: calc(var(--u)*76); height: calc(var(--u)*57); im
   const lid = document.getElementById("lid");
   const area = () => innerWidth * innerHeight;
   let lastArea = area();
-  const openLid = () => { if (!lid.classList.contains("show") || lid.classList.contains("opening")) return; lid.classList.add("opening"); setTimeout(() => lid.classList.remove("show", "opening"), 520); };
-  const closeLid = () => { lid.classList.remove("opening"); lid.classList.add("show"); };
+  // The game hears about it as a "ds-lid" event ({open}); #lid.show means it is closed.
+  const lidEvent = open => dispatchEvent(new CustomEvent("ds-lid", { detail: { open } }));
+  const openLid = () => { if (!lid.classList.contains("show") || lid.classList.contains("opening")) return; lid.classList.add("opening"); lidEvent(true); setTimeout(() => lid.classList.remove("show", "opening"), 520); };
+  const closeLid = () => { const was = lid.classList.contains("show") && !lid.classList.contains("opening"); lid.classList.remove("opening"); lid.classList.add("show"); if (!was) lidEvent(false); };
   lid.addEventListener("click", openLid);
   const params0 = new URLSearchParams(location.search);
   if (params0.has("cover") || (matchMedia("(pointer: coarse)").matches && Math.min(innerWidth, innerHeight) < 480 && !params0.has("classic"))) closeLid();
