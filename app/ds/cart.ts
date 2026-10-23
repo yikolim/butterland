@@ -291,8 +291,8 @@ export function createMolarQuest(DS:DSApi){
  let flightDue=false;
  const flightReminder=()=>{
   flightDue=false;
-  notice={title:"FLIGHT",lines:["Check-in is open.","Head to the airport."],t:0};deliverySfx.notify();
-  later(900,()=>askDialog("",["•Where to?","•Save the game for now?"],
+  notice={title:"FLIGHT",lines:["It's time!","Time to catch the flight."],t:0};deliverySfx.notify();
+  later(900,()=>askDialog("",["•Going somewhere fun!","•Save game?"],
    ()=>{writeSave();openDialog("",["•To be continued..."],()=>fadeTo(()=>{scene="title";dlg=null;opening.finish()}))},
    ()=>openDialog("",["•Okay, a little longer."])));
  };

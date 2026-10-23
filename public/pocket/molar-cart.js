@@ -2928,11 +2928,11 @@
     let flightDue = false;
     const flightReminder = () => {
       flightDue = false;
-      notice = { title: "FLIGHT", lines: ["Check-in is open.", "Head to the airport."], t: 0 };
+      notice = { title: "FLIGHT", lines: ["It's time!", "Time to catch the flight."], t: 0 };
       deliverySfx.notify();
       later(900, () => askDialog(
         "",
-        ["\u2022Where to?", "\u2022Save the game for now?"],
+        ["\u2022Going somewhere fun!", "\u2022Save game?"],
         () => {
           writeSave();
           openDialog("", ["\u2022To be continued..."], () => fadeTo(() => {
