@@ -1942,7 +1942,9 @@
         o.jingle();
       }
     }
-    const BUTTONS = [{ label: "PLAY", y: 62 }, { label: "HOW TO PLAY", y: 104 }];
+    const PLAIN = [{ label: "PLAY", y: 62, pick: "play" }, { label: "HOW TO PLAY", y: 104, pick: "help" }];
+    const SAVED = [{ label: "CONTINUE", y: 44, pick: "play" }, { label: "NEW GAME", y: 84, pick: "new" }, { label: "HOW TO PLAY", y: 124, pick: "help" }];
+    const buttons = () => o.hasSave() ? SAVED : PLAIN;
     const BX = 48, BWIDTH = 160, BHEIGHT = 32;
     const woodButton = (g, x, y, w, h, label, on) => {
       g.fillStyle = "#2b1a0e";
@@ -2050,7 +2052,7 @@
       }
       const r4 = ease((t - MENU_AT) / MENU_RISE), rise = (1 - r4) * 40, cardUp = page >= 0 ? smooth(closing ? 1 - cardClock / CARD_OUT : cardClock / CARD_IN) : 0;
       g.globalAlpha = r4 * (1 - cardUp * 0.85);
-      BUTTONS.forEach((b, i) => {
+      buttons().forEach((b, i) => {
         const bob = i === selected ? Math.round(Math.sin(t * 4) * 1.5) : 0;
         woodButton(g, BX, Math.round(b.y + rise + bob), BWIDTH, BHEIGHT, b.label, i === selected);
         if (i === selected) {
@@ -2091,7 +2093,9 @@
     };
     return {
       update(dt) {
+        const before = t;
         t += dt;
+        if (before < 0.35 && t >= 0.35) o.splash();
         if (skipPhase === 1) {
           skipClock += dt;
           if (skipClock >= SKIP_OUT) {
@@ -2132,7 +2136,10 @@
         skipPhase = 0;
       },
       move(dir) {
-        if (page < 0) selected = (selected + dir + BUTTONS.length) % BUTTONS.length;
+        if (page < 0) {
+          const n = buttons().length;
+          selected = (selected + dir + n) % n;
+        }
       },
       // A / START: returns what to do.
       choose() {
@@ -2145,11 +2152,12 @@
           advanceCard();
           return null;
         }
-        if (selected === 1) {
+        const pick = buttons()[Math.min(selected, buttons().length - 1)].pick;
+        if (pick === "help") {
           openCard();
           return "help";
         }
-        return "play";
+        return pick;
       },
       // Touch on the bottom screen.
       touch(x, y) {
@@ -2162,7 +2170,7 @@
           advanceCard();
           return null;
         }
-        const i = BUTTONS.findIndex((b) => x >= BX && x <= BX + BWIDTH && y >= b.y && y <= b.y + BHEIGHT);
+        const i = buttons().findIndex((b) => x >= BX && x <= BX + BWIDTH && y >= b.y && y <= b.y + BHEIGHT);
         if (i < 0) return null;
         selected = i;
         return this.choose();
@@ -2599,12 +2607,13 @@
       soundOn = localStorage.getItem("molar-sound") !== "off";
     } catch {
     }
+    const MUSIC = 0.245;
     const bgm = new Audio("./music/kuruma-de-ds.mp3");
     bgm.loop = true;
-    bgm.volume = 0.35;
+    bgm.volume = MUSIC;
     bgm.preload = "auto";
     const bgmDuck = (on) => {
-      bgm.volume = on ? 0.08 : 0.35;
+      bgm.volume = on ? MUSIC * 0.23 : MUSIC;
     };
     const syncMusic = () => {
       if (soundOn) void bgm.play().catch(() => {
@@ -2768,9 +2777,41 @@
         say(f.def.name);
       });
     };
-    const startGame = () => fadeTo(() => {
+    const SAVE_KEY = "butterland-save";
+    const readSave = () => {
+      try {
+        const s = JSON.parse(localStorage.getItem(SAVE_KEY) ?? "null");
+        return s?.v === 1 ? s : null;
+      } catch {
+        return null;
+      }
+    };
+    const writeSave = () => {
+      const d = delivery === "doorbell" || delivery === "cutscene" ? "none" : delivery === "unboxing" ? "waiting" : delivery;
+      try {
+        localStorage.setItem(SAVE_KEY, JSON.stringify({ v: 1, found: [...foundCats], questGiven, countDone, delivery: d, x: out.x, y: out.y }));
+      } catch {
+      }
+    };
+    const loadSave = (s) => {
+      foundCats.clear();
+      for (const n of s.found) foundCats.add(n);
+      questGiven = s.questGiven;
+      countDone = s.countDone;
+      delivery = s.delivery;
+      out.x = s.x;
+      out.y = s.y;
+      out.dir = "down";
+    };
+    const startGame = (fresh = false) => fadeTo(() => {
+      const s = fresh ? null : readSave();
+      if (fresh) try {
+        localStorage.removeItem(SAVE_KEY);
+      } catch {
+      }
+      if (s) loadSave(s);
       scene = "outside";
-      say("FRONT YARD", 3);
+      say(s ? "WELCOME BACK!" : "FRONT YARD", 3);
     });
     const jingle = () => {
       if (!soundOn) return;
@@ -2794,7 +2835,30 @@
     };
     const agguSheet = new Image();
     agguSheet.src = "./sprite-sheets/white-cat-walk-concept.png";
-    const opening = createOpening({ W, H, BW, BH, world: () => world, reduceMotion, jingle, cat: () => agguSheet });
+    const splashSfx = () => {
+      if (!soundOn) return;
+      try {
+        sfx ?? (sfx = new AudioContext());
+        if (sfx.state === "suspended") void sfx.resume();
+        if (sfx.state !== "running") return;
+        const ctx = sfx, t0 = ctx.currentTime;
+        for (const [hz, at] of [[783.99, 0], [1174.66, 0.16]]) {
+          const osc = ctx.createOscillator(), gain = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.value = hz;
+          gain.gain.setValueAtTime(0, t0 + at);
+          gain.gain.linearRampToValueAtTime(0.07, t0 + at + 0.02);
+          gain.gain.exponentialRampToValueAtTime(1e-3, t0 + at + 0.7);
+          osc.connect(gain).connect(ctx.destination);
+          osc.start(t0 + at);
+          osc.stop(t0 + at + 0.75);
+        }
+        const aggu = cats.find((c) => c.behavior === "zoomies");
+        if (aggu) later(450, () => meow(aggu, true, true));
+      } catch {
+      }
+    };
+    const opening = createOpening({ W, H, BW, BH, world: () => world, reduceMotion, jingle, cat: () => agguSheet, splash: splashSfx, hasSave: () => !!readSave() });
     const deliverySfx = makeDeliverySounds(() => {
       if (!soundOn) return null;
       try {
@@ -2830,9 +2894,29 @@
     const hasPhone = () => delivery === "done";
     let phoneOpen = false, phoneLayer = null, phoneFrame = null, placePhone = () => {
     };
+    let flightDue = false;
+    const flightReminder = () => {
+      flightDue = false;
+      notice = { title: "FLIGHT", lines: ["Time to catch a flight!", "Boarding soon."], t: 0 };
+      deliverySfx.notify();
+      later(900, () => askDialog(
+        "CLAIRE",
+        ["\u2022Oh no, look at the time! I have a flight to catch.", "\u2022Save the game for now?"],
+        () => {
+          writeSave();
+          openDialog("", ["\u2022Game saved. Have a good flight, Claire!"], () => fadeTo(() => {
+            scene = "title";
+            dlg = null;
+            opening.finish();
+          }));
+        },
+        () => openDialog("CLAIRE", ["\u2022Okay, just a little longer..."])
+      ));
+    };
     const closePhone = () => {
       if (!phoneOpen || !phoneLayer || !phoneFrame) return;
       phoneOpen = false;
+      if (flightDue) later(500, flightReminder);
       phoneLayer.style.opacity = "0";
       phoneFrame.style.transform = "translateY(24px)";
       const layer = phoneLayer;
@@ -2859,6 +2943,7 @@
           else if (type === "tesla-drive") {
             notice = { title: "TESLA", lines: ["Battery is at 1%.", "Plug in to drive."], t: 0 };
             deliverySfx.notify();
+            flightDue = true;
           }
         });
         const place = () => {
@@ -2912,7 +2997,9 @@
     const interact = () => {
       if (busy) return;
       if (scene === "title") {
-        if (opening.choose() === "play") startGame();
+        const c = opening.choose();
+        if (c === "play") startGame();
+        else if (c === "new") startGame(true);
         return;
       }
       if (dlg) {
@@ -3019,6 +3106,22 @@
         return;
       }
       if (floorIndex === 0 && claire.y >= EXIT.y && claire.x >= EXIT.x0 && claire.x < EXIT.x1) leaveHouse();
+    };
+    const drawPlane = (g, x, y) => {
+      const R = (rx, ry, w, h, c) => {
+        g.fillStyle = c;
+        g.fillRect(x + rx, y + ry, w, h);
+      };
+      R(-13, -2, 26, 5, INK3);
+      R(-12, -1, 24, 3, "#e8f2ff");
+      R(10, -1, 3, 3, "#7fb7ff");
+      R(-4, -11, 6, 10, INK3);
+      R(-3, -10, 4, 9, "#cfe0f5");
+      R(-4, 3, 6, 9, INK3);
+      R(-3, 3, 4, 8, "#cfe0f5");
+      R(-14, -7, 4, 6, INK3);
+      R(-13, -6, 2, 5, "#ff8fb1");
+      for (let i = 0; i < 3; i++) R(-6 + i * 5, 0, 2, 1, "#5a7aa8");
     };
     const text = (g, s, x, y, size, color, align = "left") => {
       g.font = `${size}px ${PX2}`;
@@ -3174,6 +3277,7 @@
         g.fillStyle = "#ffd84a";
         g.fillRect(nx + 2, ny + 2, nw - 4, 3);
         if (notice.title === "TESLA") drawPhone(g, nx + 22, ny + 28, 2);
+        else if (notice.title === "FLIGHT") drawPlane(g, nx + 22, ny + 27);
         else pkg(g, nx + 22, ny + 42, true);
         text(g, notice.title, nx + 42, ny + 10, 7, "#c9851e");
         notice.lines.forEach((l, i) => text(g, l, nx + 42, ny + 23 + i * 11, 6, INK3));
@@ -3406,7 +3510,10 @@
             return;
           }
           if (scene === "title") {
-            if (!busy && opening.touch(t.x, t.y) === "play") startGame();
+            if (busy) return;
+            const c = opening.touch(t.x, t.y);
+            if (c === "play") startGame();
+            else if (c === "new") startGame(true);
           } else if (t.x >= DIALOG.x && t.x <= DIALOG.x + DIALOG.w && t.y >= DIALOG.y && t.y <= DIALOG.y + DIALOG.h) {
             if (asking()) dlg.ask.sel = t.x < DIALOG.x + DIALOG.w / 2 ? 0 : 1;
             interact();

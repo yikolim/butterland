@@ -206,6 +206,8 @@ canvas { display: block; width: calc(var(--u)*76); height: calc(var(--u)*57); im
 .ds.duo:not(.duo-row) .deck { column-gap: calc(var(--u)*2.5); }
 .ds.duo:not(.duo-row) .bottom { padding-left: calc(var(--u)*3); padding-right: calc(var(--u)*3); }
 .ds.duo:not(.duo-row) .sys { padding-left: calc(var(--u)*2); }
+.ds.duo:not(.duo-row) .top .bezel { padding: calc(var(--u)*1.2); }
+.ds.duo:not(.duo-row) .top .glass { padding: calc(var(--u)*.7); }
 @media (prefers-reduced-motion: reduce) { .dpad, .btn, .pill { transition: none; } }
 </style>
 
@@ -312,13 +314,16 @@ canvas { display: block; width: calc(var(--u)*76); height: calc(var(--u)*57); im
     else ds.style.removeProperty("--fold");
     let uMin = Infinity;
     for (const [shell, inner] of halves) {
+      const isTop = shell.id === "topShell";
       shell.style.setProperty("--u", "4px");
       const r = inner.getBoundingClientRect();
       const cs = getComputedStyle(shell);
       const aw = shell.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
       const ah = shell.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
       // keep clear of the hinge strip (and the shoulder tabs when they're shown)
-      const u = 4 * Math.min(aw * (row ? 0.86 : 0.9) / r.width, ah * (row ? 0.84 : 0.86) / r.height);
+      // Held tall the top screen nearly fills its half; the touch screen keeps room for the controls.
+      const fw = row ? 0.86 : isTop ? 0.97 : 0.9, fh = row ? 0.84 : isTop ? 0.93 : 0.86;
+      const u = 4 * Math.min(aw * fw / r.width, ah * fh / r.height);
       shell.style.setProperty("--u", u + "px");
       uMin = Math.min(uMin, u);
     }
