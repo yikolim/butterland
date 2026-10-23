@@ -415,7 +415,8 @@
       y: 12.5,
       sheet: "./sprite-sheets/sashi-walk.png",
       behavior: "hide",
-      lines: ["\u2022Sashi looks up from Claire's letters.", "\u2022...Chirp. The handwriting is acceptable.", "\u2022She returns to her hiding place with great dignity."]
+      lines: ["\u2022Sashi looks up from Claire's letters.", "\u2022...Chirp. The handwriting is acceptable.", "\u2022She returns to her hiding place with great dignity."],
+      bolt: "\u2022Sashi no want pet, Sashi want big boobies."
     }
   ];
   var ENTRY = { x: 28, y: 31.6 };
@@ -1623,7 +1624,7 @@
         cat.clock = 0;
       } else startRest(cat, 2, 3);
     }
-    return { likes, name: "", pages: [`\u2022${cat.name} was not ready for that. ${cat.name} runs away!`] };
+    return { likes, name: "", pages: [cat.bolt ?? `\u2022${cat.name} was not ready for that. ${cat.name} runs away!`] };
   }
   function tickEffects(effects, dt) {
     for (let i = effects.length - 1; i >= 0; i--) {
