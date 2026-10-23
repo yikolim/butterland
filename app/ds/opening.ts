@@ -4,7 +4,7 @@
 // Any button or tap during the intro skips straight to the finished title.
 
 type G=CanvasRenderingContext2D;
-export type OpeningChoice="play"|"help"|null;
+export type OpeningChoice="play"|"new"|"help"|null;
 
 // The touch-screen backdrop shared by the title menu and the game: soft sky fading to green,
 // with a strip of grass and a few flowers along the bottom.
@@ -39,6 +39,8 @@ export function createOpening(o:{
  reduceMotion:boolean;
  jingle:()=>void;                     // played once when the logo lands (caller decides on sound)
  cat:()=>HTMLImageElement|null;       // Aggu's walk sheet (4 x 3 cells, row 0 walks right) for the splash
+ splash:()=>void;                     // played once as the splash fades in (caller decides on sound)
+ hasSave:()=>boolean;                 // a saved game: the menu offers CONTINUE and NEW GAME
 }){
  const {W,H,BW,BH}=o;
  // Town height once scaled to the screen width; the 1672x941 picture gives 400x225.
@@ -198,7 +200,10 @@ export function createOpening(o:{
  }
 
  /* ---- bottom screen ---- */
- const BUTTONS=[{label:"PLAY",y:62},{label:"HOW TO PLAY",y:104}];
+ // With a saved game the menu is CONTINUE / NEW GAME / HOW TO PLAY, otherwise PLAY / HOW TO PLAY.
+ const PLAIN=[{label:"PLAY",y:62,pick:"play"},{label:"HOW TO PLAY",y:104,pick:"help"}] as const;
+ const SAVED=[{label:"CONTINUE",y:44,pick:"play"},{label:"NEW GAME",y:84,pick:"new"},{label:"HOW TO PLAY",y:124,pick:"help"}] as const;
+ const buttons=()=>o.hasSave()?SAVED:PLAIN;
  const BX=48,BWIDTH=160,BHEIGHT=32;
  const woodButton=(g:G,x:number,y:number,w:number,h:number,label:string,on:boolean)=>{
   g.fillStyle="#2b1a0e";g.fillRect(x+2,y+3,w,h);                 // drop shadow
@@ -274,7 +279,7 @@ export function createOpening(o:{
   }
   const r=ease((t-MENU_AT)/MENU_RISE),rise=(1-r)*40,cardUp=page>=0?smooth(closing?1-cardClock/CARD_OUT:cardClock/CARD_IN):0;
   g.globalAlpha=r*(1-cardUp*.85);
-  BUTTONS.forEach((b,i)=>{
+  buttons().forEach((b,i)=>{
    const bob=i===selected?Math.round(Math.sin(t*4)*1.5):0;
    woodButton(g,BX,Math.round(b.y+rise+bob),BWIDTH,BHEIGHT,b.label,i===selected);
    if(i===selected){const ax=BX-12+Math.round(Math.sin(t*6)*2),ay=Math.round(b.y+rise+BHEIGHT/2);g.fillStyle="#4a2a12";g.fillRect(ax,ay-4,2,8);g.fillRect(ax+2,ay-3,2,6);g.fillRect(ax+4,ay-2,2,4);g.fillRect(ax+6,ay-1,2,2)}
@@ -293,7 +298,8 @@ export function createOpening(o:{
  };
  return{
   update(dt:number){
-   t+=dt;
+   const before=t;t+=dt;
+   if(before<.35&&t>=.35)o.splash();
    if(skipPhase===1){skipClock+=dt;if(skipClock>=SKIP_OUT){t=Math.max(t,MENU_AT);jingled=true;skipPhase=2;skipClock=0}}
    else if(skipPhase===2){skipClock+=dt;if(skipClock>=SKIP_IN)skipPhase=0}
    if(page>=0){
@@ -308,21 +314,22 @@ export function createOpening(o:{
   skip:startSkip,
   back:closeCard,
   finish(){t=Math.max(t,99);jingled=true;page=-1;closing=false;flipClock=-1;skipPhase=0},
-  move(dir:-1|1){if(page<0)selected=(selected+dir+BUTTONS.length)%BUTTONS.length},
+  move(dir:-1|1){if(page<0){const n=buttons().length;selected=(selected+dir+n)%n}},
   // A / START: returns what to do.
   choose():OpeningChoice{
    if(skipPhase)return null;
    if(!ready()){startSkip();return null}
    if(page>=0){advanceCard();return null}
-   if(selected===1){openCard();return "help"}
-   return "play";
+   const pick=buttons()[Math.min(selected,buttons().length-1)].pick;
+   if(pick==="help"){openCard();return "help"}
+   return pick;
   },
   // Touch on the bottom screen.
   touch(x:number,y:number):OpeningChoice{
    if(skipPhase)return null;
    if(!ready()){startSkip();return null}
    if(page>=0){advanceCard();return null}
-   const i=BUTTONS.findIndex(b=>x>=BX&&x<=BX+BWIDTH&&y>=b.y&&y<=b.y+BHEIGHT);
+   const i=buttons().findIndex(b=>x>=BX&&x<=BX+BWIDTH&&y>=b.y&&y<=b.y+BHEIGHT);
    if(i<0)return null;
    selected=i;return this.choose();
   }

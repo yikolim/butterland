@@ -105,9 +105,10 @@ export function createMolarQuest(DS:DSApi){
  try{soundOn=localStorage.getItem("molar-sound")!=="off"}catch{/* storage blocked */}
  // Background music ("Kuruma de DS", public/music/kuruma-de-ds.mp3), looped and quiet. Browsers only allow it after a button press
  // or tap, so it starts on the first input and follows the same sound toggle.
- const bgm=new Audio("/music/kuruma-de-ds.mp3");bgm.loop=true;bgm.volume=.35;bgm.preload="auto";
+ const MUSIC=.245;   // music volume (30% under the first .35)
+ const bgm=new Audio("/music/kuruma-de-ds.mp3");bgm.loop=true;bgm.volume=MUSIC;bgm.preload="auto";
  // Quieter music while the celebration plays over it.
- const bgmDuck=(on:boolean)=>{bgm.volume=on?.08:.35};
+ const bgmDuck=(on:boolean)=>{bgm.volume=on?MUSIC*.23:MUSIC};
  const syncMusic=()=>{if(soundOn)void bgm.play().catch(()=>{});else bgm.pause()};
  const setSound=(on:boolean)=>{soundOn=on;try{localStorage.setItem("molar-sound",on?"on":"off")}catch{/* storage blocked */}syncMusic()};
  const rawMeow=makeMeow();
@@ -191,7 +192,25 @@ export function createMolarQuest(DS:DSApi){
   if(landing){claire.x=landing.x;claire.y=landing.y}
   claire.dir="down";claire.moving=false;claire.frame=1;snapCamera();say(f.def.name);
  });}
- const startGame=()=>fadeTo(()=>{scene="outside";say("FRONT YARD",3)});
+ /* save: progress is kept in this browser (localStorage) when Claire leaves for her flight */
+ type Save={v:1;found:string[];questGiven:boolean;countDone:boolean;delivery:Delivery;x:number;y:number};
+ const SAVE_KEY="butterland-save";
+ const readSave=():Save|null=>{try{const s=JSON.parse(localStorage.getItem(SAVE_KEY)??"null");return s?.v===1?s:null}catch{return null}};
+ const writeSave=()=>{
+  // Mid-delivery states resume from the step before them.
+  const d:Delivery=delivery==="doorbell"||delivery==="cutscene"?"none":delivery==="unboxing"?"waiting":delivery;
+  try{localStorage.setItem(SAVE_KEY,JSON.stringify({v:1,found:[...foundCats],questGiven,countDone,delivery:d,x:out.x,y:out.y} satisfies Save))}catch{/* storage blocked */}
+ };
+ const loadSave=(s:Save)=>{
+  foundCats.clear();for(const n of s.found)foundCats.add(n);
+  questGiven=s.questGiven;countDone=s.countDone;delivery=s.delivery;out.x=s.x;out.y=s.y;out.dir="down";
+ };
+ const startGame=(fresh=false)=>fadeTo(()=>{
+  const s=fresh?null:readSave();
+  if(fresh)try{localStorage.removeItem(SAVE_KEY)}catch{/* storage blocked */}
+  if(s)loadSave(s);
+  scene="outside";say(s?"WELCOME BACK!":"FRONT YARD",3);
+ });
  // A short rising chime when the logo lands (only with sound on, and only once audio is allowed).
  const jingle=()=>{
   if(!soundOn)return;
@@ -208,7 +227,23 @@ export function createMolarQuest(DS:DSApi){
   }catch{/* no audio */}
  };
  const agguSheet=new Image();agguSheet.src="/sprite-sheets/white-cat-walk-concept.png";
- const opening=createOpening({W,H,BW,BH,world:()=>world,reduceMotion,jingle,cat:()=>agguSheet});
+ // Splash: a soft two-note chime and a little mew from Aggu. Browsers only let it sound once the
+ // page has had a tap or key press, so on a first visit it may stay silent.
+ const splashSfx=()=>{
+  if(!soundOn)return;
+  try{
+   sfx??=new AudioContext();if(sfx.state==="suspended")void sfx.resume();
+   if(sfx.state!=="running")return;
+   const ctx=sfx,t0=ctx.currentTime;
+   for(const [hz,at] of [[783.99,0],[1174.66,.16]] as const){
+    const osc=ctx.createOscillator(),gain=ctx.createGain();osc.type="sine";osc.frequency.value=hz;
+    gain.gain.setValueAtTime(0,t0+at);gain.gain.linearRampToValueAtTime(.07,t0+at+.02);gain.gain.exponentialRampToValueAtTime(.001,t0+at+.7);
+    osc.connect(gain).connect(ctx.destination);osc.start(t0+at);osc.stop(t0+at+.75);
+   }
+   const aggu=cats.find(c=>c.behavior==="zoomies");if(aggu)later(450,()=>meow(aggu,true,true));
+  }catch{/* no audio */}
+ };
+ const opening=createOpening({W,H,BW,BH,world:()=>world,reduceMotion,jingle,cat:()=>agguSheet,splash:splashSfx,hasSave:()=>!!readSave()});
  const deliverySfx=makeDeliverySounds(()=>{
   if(!soundOn)return null;
   try{sfx??=new AudioContext();if(sfx.state==="suspended")void sfx.resume();return sfx}catch{return null}
@@ -233,9 +268,19 @@ export function createMolarQuest(DS:DSApi){
  /* ---- Claire's phone: the Tesla app (public/phone), shown over the handheld ---- */
  // It runs in its own page so it can keep its own UI; it asks to close with a postMessage.
  let phoneOpen=false,phoneLayer:HTMLDivElement|null=null,phoneFrame:HTMLIFrameElement|null=null,placePhone=()=>{};
+ // After the low-battery news, putting the phone away brings the flight reminder and an offer to save.
+ let flightDue=false;
+ const flightReminder=()=>{
+  flightDue=false;
+  notice={title:"FLIGHT",lines:["Time to catch a flight!","Boarding soon."],t:0};deliverySfx.notify();
+  later(900,()=>askDialog("CLAIRE",["•Oh no, look at the time! I have a flight to catch.","•Save the game for now?"],
+   ()=>{writeSave();openDialog("",["•Game saved. Have a good flight, Claire!"],()=>fadeTo(()=>{scene="title";dlg=null;opening.finish()}))},
+   ()=>openDialog("CLAIRE",["•Okay, just a little longer..."])));
+ };
  const closePhone=()=>{
   if(!phoneOpen||!phoneLayer||!phoneFrame)return;
   phoneOpen=false;
+  if(flightDue)later(500,flightReminder);
   phoneLayer.style.opacity="0";phoneFrame.style.transform="translateY(24px)";
   const layer=phoneLayer;setTimeout(()=>{if(!phoneOpen)layer.style.display="none"},300);
   phoneFrame.blur();window.focus();
@@ -255,7 +300,7 @@ export function createMolarQuest(DS:DSApi){
     const type=(e.data as {type?:string}|null)?.type;
     if(type==="phone-close")closePhone();
     // Claire pressed Navigate: the Tesla answers on the top screen.
-    else if(type==="tesla-drive"){notice={title:"TESLA",lines:["Battery is at 1%.","Plug in to drive."],t:0};deliverySfx.notify()}
+    else if(type==="tesla-drive"){notice={title:"TESLA",lines:["Battery is at 1%.","Plug in to drive."],t:0};deliverySfx.notify();flightDue=true}
    });
    const place=()=>{
     const screen=document.getElementById("bottom");if(!screen||!phoneLayer)return;
@@ -296,7 +341,7 @@ export function createMolarQuest(DS:DSApi){
 
  const interact=()=>{
   if(busy)return;
-  if(scene==="title"){if(opening.choose()==="play")startGame();return}
+  if(scene==="title"){const c=opening.choose();if(c==="play")startGame();else if(c==="new")startGame(true);return}
   if(dlg){advanceDialog();return}
   if(scene==="delivery"){truckT=Math.max(truckT,TRUCK.END);return}
   if(scene==="outside"){if(delivery==="unboxing")return;if(nearPackage())pickUpPackage();else if(nearCar())openPhone();else if(nearDoor())enterHouse();return}
@@ -368,6 +413,14 @@ export function createMolarQuest(DS:DSApi){
  };
 
  /* ---- drawing helpers ---- */
+ // A tiny plane for the flight notice, centred on (x,y).
+ const drawPlane=(g:CanvasRenderingContext2D,x:number,y:number)=>{
+  const R=(rx:number,ry:number,w:number,h:number,c:string)=>{g.fillStyle=c;g.fillRect(x+rx,y+ry,w,h)};
+  R(-13,-2,26,5,INK);R(-12,-1,24,3,"#e8f2ff");R(10,-1,3,3,"#7fb7ff");          // body and nose
+  R(-4,-11,6,10,INK);R(-3,-10,4,9,"#cfe0f5");R(-4,3,6,9,INK);R(-3,3,4,8,"#cfe0f5");   // wings
+  R(-14,-7,4,6,INK);R(-13,-6,2,5,"#ff8fb1");                                     // tail
+  for(let i=0;i<3;i++)R(-6+i*5,0,2,1,"#5a7aa8");                                 // windows
+ };
  const text=(g:CanvasRenderingContext2D,s:string,x:number,y:number,size:number,color:string,align:CanvasTextAlign="left")=>{
   g.font=`${size}px ${PX}`;g.textAlign=align;g.textBaseline="top";g.fillStyle=color;g.fillText(s,x,y);
  };
@@ -487,7 +540,7 @@ export function createMolarQuest(DS:DSApi){
    g.fillStyle="rgba(20,20,30,.35)";g.fillRect(nx+3,ny+4,nw,nh);
    g.fillStyle=INK;g.fillRect(nx,ny,nw,nh);g.fillStyle=PAPER;g.fillRect(nx+2,ny+2,nw-4,nh-4);
    g.fillStyle="#ffd84a";g.fillRect(nx+2,ny+2,nw-4,3);
-   if(notice.title==='TESLA')drawPhone(g,nx+22,ny+28,2);else pkg(g,nx+22,ny+42,true);
+   if(notice.title==='TESLA')drawPhone(g,nx+22,ny+28,2);else if(notice.title==='FLIGHT')drawPlane(g,nx+22,ny+27);else pkg(g,nx+22,ny+42,true);
    text(g,notice.title,nx+42,ny+10,7,"#c9851e");
    notice.lines.forEach((l,i)=>text(g,l,nx+42,ny+23+i*11,6,INK));
   }
@@ -617,7 +670,7 @@ export function createMolarQuest(DS:DSApi){
     if(t.phase!=="start"||phoneOpen)return;
     if(bgm.paused&&soundOn&&!inSound(t))syncMusic();
     if(inSound(t)){setSound(!soundOn);return}
-    if(scene==="title"){if(!busy&&opening.touch(t.x,t.y)==="play")startGame()}
+    if(scene==="title"){if(busy)return;const c=opening.touch(t.x,t.y);if(c==="play")startGame();else if(c==="new")startGame(true)}
     else if(t.x>=DIALOG.x&&t.x<=DIALOG.x+DIALOG.w&&t.y>=DIALOG.y&&t.y<=DIALOG.y+DIALOG.h){
      if(asking())dlg!.ask!.sel=t.x<DIALOG.x+DIALOG.w/2?0:1;   // tap YES or NO
      interact();
