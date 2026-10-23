@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#183638"><title>Pocket Bloom — Interactive Pink Handheld</title>
+  <meta name="description" content="Open a pink pocket console and step inside a tiny playable world.">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<main class="experience is-closed" id="experience">
+  <div class="orb orb-a"></div><div class="orb orb-b"></div>
+  <header><a class="logo" href="#">POCKET<span>BLOOM</span></a><p>AN INTERACTIVE HANDHELD</p><button class="sound" id="sound"><span>SOUND ON</span><i>♪</i></button></header>
+  <section class="hero">
+    <div class="copy"><div class="eyebrow"><span></span> YOUR LITTLE ESCAPE</div><h1>A tiny world<br>is waiting.</h1><p>Open the pink pocket console and tend a garden that fits in your hands.</p><button class="open-cta open-trigger"><span>OPEN THE CONSOLE</span><i>↗</i></button></div>
+    <div class="console-stage"><div class="aura"></div><div class="shadow"></div>
+      <div class="console" aria-label="Pink dual-screen handheld console">
+        <section class="top-shell">
+          <button class="outer-lid open-trigger" aria-label="Open the pink handheld"><span class="shine"></span><span class="camera-dot"></span><span class="lid-logo">POCKET<br><b>BLOOM</b></span><small>TAP TO OPEN</small></button>
+          <div class="inner-lid"><span class="speaker left" aria-hidden="true"></span><span class="speaker right" aria-hidden="true"></span><span class="inner-camera">●</span><div class="screen top-screen" id="game-top"><div class="screen-off">POCKET<br><b>BLOOM</b></div></div><span class="led"></span></div>
+        </section>
+        <div class="hinge"><span></span><span></span><i></i></div>
+        <section class="bottom-shell">
+          <div class="screen touch-screen" id="game-touch"><div class="screen-off">TOUCH TO START</div></div>
+          <div class="dpad" aria-label="Directional pad"><button data-input="up" class="up" aria-label="Up">▲</button><button data-input="left" class="left" aria-label="Left">▲</button><span></span><button data-input="right" class="right" aria-label="Right">▲</button><button data-input="down" class="down" aria-label="Down">▲</button></div>
+          <div class="face-buttons"><button data-input="x" class="x">X</button><button data-input="y" class="y">Y</button><button data-input="a" class="a">A</button><button data-input="b" class="b">B</button></div>
+          <div class="system-buttons"><button data-input="start">START</button><button data-input="select">SELECT</button></div><button class="power" id="power" aria-label="Power">◉</button>
+        </section>
+      </div>
+    </div>
+    <div class="step"><span>01</span><p>CLICK THE CONSOLE<br>TO BEGIN</p></div>
+    <aside class="guide"><div><span>ARROWS</span><p>Choose a garden plot</p></div><div><span>A / ENTER</span><p>Plant & water</p></div><div><span>X</span><p>Change seed</p></div><button id="close">CLOSE CONSOLE <i>↓</i></button></aside>
+  </section>
+  <footer><span>POCKET BLOOM © 2026</span><span>BUILT FOR DAYDREAMING</span></footer>
+</main>
+<script src="./game-cartridge.js"></script><script src="./shell.js"></script>
+</body></html>

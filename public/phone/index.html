@@ -1,0 +1,800 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Tesla — Claire's Phone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
+<style>
+/* Claire's phone: a pixel-art map of the town in the game's own look (Mother-style bright
+   pixels, ink outlines, cream panels with hard shadows, Press Start 2P), inside a phone shaped like
+   a folded iPhone Duo (cover screen 1 : 1.45). It is the Tesla app: the car is parked at Claire's
+   home, places can be looked up and previewed, but the battery is too low to drive anywhere.
+   Opened with ?embed inside the handheld game, it sits on a transparent page and tells the game
+   when to close (postMessage {type:"phone-close"}). */
+:root {
+  --ink: #222d35;
+  --paper: #fffde6;
+  --field: #07e66e;
+  --violet: #7457e6;
+  --gold: #ffe260;
+  --muted: #68756e;
+  --room: #e7e4e1;
+  --room-2: #d5d0cc;
+  --px: "Press Start 2P", ui-monospace, monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: radial-gradient(120% 90% at 50% 25%, var(--room) 0%, var(--room-2) 100%);
+  overflow: hidden; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
+}
+.stage { position: fixed; inset: 0; display: grid; place-items: center; }
+
+/* ---------- phone ---------- */
+.phone {
+  width: 414px; height: 590px; border-radius: 54px; background: #121316; padding: 12px; position: relative;
+  box-shadow: 0 0 0 2px #2b2d33, 0 0 0 4px #9a9ca3, 0 30px 60px rgba(30, 25, 30, .35);
+  transform-origin: center;
+}
+.phone::before { content: ""; position: absolute; right: -6px; top: 150px; width: 4px; height: 70px; border-radius: 0 3px 3px 0; background: #8e9097; }
+.phone::after { content: ""; position: absolute; left: -6px; top: 120px; width: 4px; height: 44px; border-radius: 3px 0 0 3px; background: #8e9097; box-shadow: 0 60px 0 #8e9097; }
+.screen {
+  position: relative; width: 390px; height: 566px; border-radius: 42px; overflow: hidden; overflow: clip;
+  background: var(--field); isolation: isolate; font-family: var(--px); color: var(--ink);
+}
+.island { position: absolute; z-index: 50; top: 10px; left: 50%; width: 104px; height: 30px; margin-left: -52px; border-radius: 20px; background: #000; }
+
+/* ---------- status bar ---------- */
+.status {
+  position: absolute; z-index: 40; top: 0; left: 0; right: 0; height: 50px; padding: 0 30px 0 40px;
+  display: flex; align-items: center; justify-content: space-between; pointer-events: none;
+  font: 10px/1 var(--px); color: var(--ink);
+}
+.status .icons { display: flex; align-items: center; gap: 6px; }
+.status svg { shape-rendering: crispEdges; }
+
+/* ---------- map ---------- */
+#map { position: absolute; inset: 0; width: 390px; height: 566px; touch-action: none; cursor: grab; image-rendering: pixelated; }
+#map.dragging { cursor: grabbing; }
+.tags { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
+.tag {
+  position: absolute; transform: translate(-50%, -50%); white-space: nowrap; font: 7px/1 var(--px); color: var(--ink);
+  background: var(--paper); border: 2px solid var(--ink); padding: 3px 4px 2px; box-shadow: 2px 2px 0 rgba(34,45,53,.55);
+  transition: opacity .2s steps(3);
+}
+.tag.place { background: var(--gold); font-size: 8px; padding: 4px 5px 3px; transform: translate(-50%, 6px); }
+
+/* ---------- pixel UI pieces ---------- */
+.panel { background: var(--paper); border: 3px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); }
+.pbtn {
+  width: 44px; height: 44px; padding: 0; border: 3px solid var(--ink); background: var(--paper); box-shadow: 3px 3px 0 var(--ink);
+  display: grid; place-items: center; cursor: pointer; color: var(--ink);
+}
+.pbtn svg { width: 20px; height: 20px; shape-rendering: crispEdges; }
+.pbtn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+.pbtn.on { background: var(--gold); }
+.topbar { position: absolute; z-index: 20; top: 56px; left: 16px; right: 16px; display: flex; align-items: center; gap: 12px; }
+.pill { flex: 1; height: 44px; display: flex; align-items: center; justify-content: center; gap: 10px; font: 9px/1 var(--px); min-width: 0; padding: 0 10px; }
+.pill span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-top: 2px; }
+.pill .dot { width: 8px; height: 8px; background: var(--muted); flex: none; box-shadow: 0 0 0 2px var(--ink); animation: blink 1s steps(2) infinite; }
+.pill.ready .dot { background: var(--field); animation: none; }
+@keyframes blink { 50% { opacity: .2; } }
+.side { position: absolute; z-index: 20; right: 16px; top: 112px; display: flex; flex-direction: column; gap: 10px; }
+.side .pbtn { width: 40px; height: 40px; }
+
+/* ---------- bottom sheet ---------- */
+.sheet {
+  position: absolute; z-index: 30; left: 0; right: 0; bottom: 0; height: 264px; background: var(--paper);
+  border-top: 3px solid var(--ink); box-shadow: 0 -3px 0 rgba(34,45,53,.25); display: flex; flex-direction: column;
+  transition: height .3s steps(6);
+}
+.sheet.full { height: 470px; }
+.sheet.card { height: 262px; }
+.grab { flex: none; height: 24px; display: grid; place-items: center; cursor: pointer; }
+.grab i { width: 48px; height: 6px; background: var(--ink); }
+.pane { position: absolute; inset: 24px 0 0; display: flex; flex-direction: column; transition: opacity .2s steps(3); }
+.pane[hidden] { display: flex; opacity: 0; pointer-events: none; }
+.search { margin: 2px 16px 0; height: 46px; display: flex; align-items: center; gap: 10px; padding: 0 12px; background: #fff; border: 3px solid var(--ink); box-shadow: inset 3px 3px 0 #e8e4cc; }
+.search svg { width: 18px; height: 18px; flex: none; shape-rendering: crispEdges; }
+.search input { flex: 1; min-width: 0; height: 100%; border: 0; background: none; outline: none; color: var(--ink); font: 10px/1 var(--px); padding-top: 3px; }
+.search input::placeholder { color: #9aa29c; }
+.tabs[hidden] { display: none; }
+.tabs { display: flex; gap: 10px; margin: 12px 16px 0; }
+.tabs button { flex: 1; height: 34px; border: 3px solid var(--ink); background: #ece8cf; color: var(--muted); font: 9px/1 var(--px); cursor: pointer; padding-top: 3px; }
+.tabs button.on { background: var(--violet); color: #fff; box-shadow: 3px 3px 0 var(--ink); }
+.list { flex: 1; overflow-y: auto; padding: 4px 16px 18px; scrollbar-width: none; }
+.list::-webkit-scrollbar { display: none; }
+.group { display: flex; align-items: center; gap: 10px; color: var(--muted); font: 7px/1 var(--px); margin: 14px 0 4px; }
+.group::after { content: ""; flex: 1; height: 3px; background: repeating-linear-gradient(90deg, var(--ink) 0 3px, transparent 3px 6px); opacity: .35; }
+.item { width: 100%; border: 0; background: none; color: inherit; text-align: left; display: flex; align-items: center; gap: 10px; padding: 8px 6px; cursor: pointer; }
+.item:hover, .item:focus-visible { background: #f3eec9; outline: none; }
+.item:active { background: var(--gold); }
+.item .txt { flex: 1; min-width: 0; }
+.item .name { font: 9px/1.4 var(--px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.item .addr { margin-top: 4px; color: var(--muted); font: 6px/1.4 var(--px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chip { flex: none; width: 58px; height: 52px; background: var(--gold); border: 3px solid var(--ink); box-shadow: 2px 2px 0 var(--ink); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; font: 7px/1 var(--px); }
+.chip svg { width: 14px; height: 18px; shape-rendering: crispEdges; }
+.empty { color: var(--muted); font: 7px/1.8 var(--px); padding: 18px 0; text-align: center; }
+
+/* place card */
+.card-head { display: flex; align-items: flex-start; gap: 10px; margin: 4px 16px 0; }
+.card-head .txt { flex: 1; min-width: 0; }
+.card-head .name { font: 11px/1.4 var(--px); }
+.card-head .addr { margin-top: 6px; color: var(--muted); font: 7px/1.5 var(--px); }
+.card-head .pbtn { width: 34px; height: 34px; flex: none; box-shadow: 2px 2px 0 var(--ink); }
+.card-head .pbtn svg { width: 14px; height: 14px; }
+.facts { display: flex; gap: 10px; margin: 14px 16px 0; }
+.fact { flex: 1; padding: 10px 8px 8px; }
+.fact b { display: block; font: 11px/1 var(--px); }
+.fact small { display: block; margin-top: 7px; color: var(--muted); font: 6px/1 var(--px); }
+.note { margin: 14px 16px 0; color: var(--muted); font: 6px/1.6 var(--px); text-align: center; }
+
+.pill .batt { width: 26px; height: 12px; flex: none; shape-rendering: crispEdges; }
+.pill .batt.low { animation: blink 1s steps(2) infinite; }
+.go {
+  margin: 12px 16px 0; height: 42px; border: 3px solid var(--ink); background: var(--violet); color: #fff; font: 10px/1 var(--px);
+  box-shadow: 3px 3px 0 var(--ink); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; padding-top: 3px;
+}
+.go:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+.go svg { width: 14px; height: 14px; shape-rendering: crispEdges; margin-top: -3px; }
+.warn { margin: 10px 16px 0; color: #c8324c; font: 6px/1.6 var(--px); text-align: center; }
+.modal { position: absolute; z-index: 70; inset: 0; display: grid; place-items: center; background: rgba(34,45,53,.55); opacity: 0; pointer-events: none; transition: opacity .2s steps(3); }
+.modal.show { opacity: 1; pointer-events: auto; }
+.modal .panel { width: 300px; padding: 18px 16px 16px; text-align: center; transform: translateY(12px); transition: transform .25s steps(4); }
+.modal.show .panel { transform: none; }
+.modal h2 { margin: 12px 0 0; font: 12px/1.4 var(--px); color: #c8324c; }
+.modal p { margin: 10px 0 0; font: 7px/1.8 var(--px); color: var(--muted); }
+.modal .big-batt { width: 96px; height: 44px; shape-rendering: crispEdges; }
+.modal .ok { margin: 16px auto 0; width: 120px; }
+.shake { animation: shake .4s steps(8); }
+@keyframes shake { 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
+body.embed { background: transparent; }
+body.embed .stage { cursor: pointer; }
+body.embed .phone { cursor: default; }
+.toast {
+  position: absolute; z-index: 60; left: 50%; bottom: 282px; transform: translateX(-50%); padding: 9px 12px 7px; white-space: nowrap;
+  font: 7px/1 var(--px); opacity: 0; transition: opacity .2s steps(3); pointer-events: none;
+}
+.toast.show { opacity: 1; }
+/* ---------- unfolded on the game's bottom screen (?duo): the iPhone Duo opened into a landscape
+   tablet (a 512x384 screen in its dark shell) laid over the screen, its edges allowed to run off a little;
+   the map on the left and the sheet as a side panel on the right ---------- */
+body.duo .stage { display: block; overflow: hidden; }
+body.duo .phone { position: absolute; left: 0; top: 0; width: 536px; height: 408px; border-radius: 40px; transform-origin: 0 0;
+  box-shadow: 0 0 0 2px #2b2d33, 0 0 0 4px #9a9ca3, 0 14px 30px rgba(20, 14, 22, .5); }
+body.duo .phone::before { top: 96px; height: 54px; }
+body.duo .phone::after { top: 80px; height: 36px; box-shadow: 0 46px 0 #8e9097; }
+body.duo .island, body.duo .grab { display: none; }
+body.duo .screen, body.duo #map { width: 512px; height: 384px; }
+body.duo .screen { border-radius: 28px; }
+body.duo .screen::after { content: ""; position: absolute; z-index: 45; left: 255px; top: 0; bottom: 0; width: 2px; background: rgba(34,45,53,.12); pointer-events: none; }  /* the fold */
+body.duo .status { height: 26px; padding: 0 240px 0 14px; font-size: 8px; }
+body.duo .topbar { top: 28px; left: 12px; right: 240px; gap: 8px; }
+body.duo .topbar .pbtn, body.duo .topbar > div:last-child { width: 34px !important; height: 34px; }
+body.duo .pill { height: 34px; font-size: 8px; }
+body.duo .side { top: 74px; right: 240px; gap: 6px; }
+body.duo .side .pbtn { width: 32px; height: 32px; }
+body.duo .side .pbtn svg { width: 16px; height: 16px; }
+body.duo .sheet, body.duo .sheet.full, body.duo .sheet.card { left: auto; top: 0; width: 228px; height: auto; border-top: 0; border-left: 3px solid var(--ink); box-shadow: -3px 0 0 rgba(34,45,53,.25); }
+body.duo .pane { inset: 8px 0 0; }
+body.duo .search { margin: 2px 10px 0; height: 36px; }
+body.duo .tabs { margin: 8px 10px 0; gap: 6px; }
+body.duo .tabs button { height: 28px; font-size: 7px; }
+body.duo .list { padding: 2px 10px 10px; }
+body.duo .item { padding: 6px 4px; }
+body.duo .item .name { font-size: 8px; }
+body.duo .chip { width: 48px; height: 42px; }
+body.duo .card-head { margin: 4px 10px 0; }
+body.duo .card-head .name { font-size: 9px; }
+body.duo .facts { margin: 10px 10px 0; gap: 6px; }
+body.duo .fact { padding: 8px 4px 6px; }
+body.duo .fact b { font-size: 8px; }
+body.duo .go { margin: 10px 10px 0; }
+body.duo .warn, body.duo .note { margin: 8px 10px 0; }
+body.duo .toast { left: 142px; bottom: 14px; }
+body.duo .modal .panel { width: 280px; padding: 12px 14px 12px; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: .01ms !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="stage">
+ <div class="phone" id="phone">
+  <div class="screen" id="screen">
+   <div class="island" aria-hidden="true"></div>
+   <div class="status" aria-hidden="true">
+    <span id="clock">10:21</span>
+    <span class="icons">
+     <svg width="18" height="12" viewBox="0 0 18 12" fill="#222d35"><rect x="0" y="8" width="3" height="4"/><rect x="5" y="5" width="3" height="7"/><rect x="10" y="2" width="3" height="10" opacity=".35"/><rect x="15" y="0" width="3" height="12" opacity=".35"/></svg>
+     <svg width="16" height="12" viewBox="0 0 16 12" fill="#222d35"><rect x="6" y="9" width="4" height="3"/><rect x="3" y="6" width="10" height="2"/><rect x="0" y="2" width="16" height="2"/></svg>
+     <svg width="26" height="12" viewBox="0 0 26 12"><rect x="1" y="1" width="21" height="10" fill="none" stroke="#222d35" stroke-width="2"/><rect x="3" y="3" width="13" height="6" fill="#222d35"/><rect x="23" y="4" width="3" height="4" fill="#222d35"/></svg>
+    </span>
+   </div>
+
+   <canvas id="map" width="390" height="566" aria-label="Pixel map of the town"></canvas>
+   <div class="tags" id="tags"></div>
+
+   <div class="topbar">
+    <button class="pbtn" id="back" aria-label="Back"><svg viewBox="0 0 10 10" fill="currentColor"><rect x="5" y="1" width="2" height="2"/><rect x="3" y="3" width="2" height="2"/><rect x="1" y="4" width="2" height="2"/><rect x="3" y="6" width="2" height="2"/><rect x="5" y="8" width="2" height="2"/></svg></button>
+    <div class="panel pill" id="pill"><svg class="batt low" viewBox="0 0 26 12"><rect x="1" y="1" width="21" height="10" fill="none" stroke="#222d35" stroke-width="2"/><rect x="23" y="4" width="3" height="4" fill="#222d35"/><rect x="3" y="3" width="2" height="6" fill="#ff526f"/></svg><span id="pillText">TESLA · 1%</span></div>
+    <div style="width:44px;flex:none"></div>
+   </div>
+   <div class="side">
+    <button class="pbtn" id="share" aria-label="Share location"><svg viewBox="0 0 10 10" fill="currentColor"><rect x="6" y="1" width="1" height="1"/><rect x="6" y="2" width="2" height="1"/><rect x="2" y="3" width="7" height="2"/><rect x="6" y="5" width="2" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="2" y="5" width="2" height="4"/></svg></button>
+    <button class="pbtn" id="recenter" aria-label="Find the car"><svg viewBox="0 0 10 10" fill="currentColor"><rect x="4" y="0" width="2" height="2"/><rect x="4" y="8" width="2" height="2"/><rect x="0" y="4" width="2" height="2"/><rect x="8" y="4" width="2" height="2"/><rect x="2" y="2" width="6" height="1"/><rect x="2" y="7" width="6" height="1"/><rect x="2" y="2" width="1" height="6"/><rect x="7" y="2" width="1" height="6"/><rect x="4" y="4" width="2" height="2"/></svg></button>
+    <button class="pbtn" id="mode" aria-label="Day or night"><svg viewBox="0 0 10 10" fill="currentColor"><rect x="3" y="1" width="4" height="1"/><rect x="2" y="2" width="2" height="1"/><rect x="1" y="3" width="2" height="4"/><rect x="2" y="7" width="2" height="1"/><rect x="3" y="8" width="5" height="1"/><rect x="7" y="7" width="2" height="1"/><rect x="5" y="3" width="1" height="1"/><rect x="4" y="2" width="1" height="1"/></svg></button>
+    <button class="pbtn" id="pinsBtn" aria-label="Show all places"><svg viewBox="0 0 10 10" fill="currentColor"><rect x="3" y="0" width="4" height="1"/><rect x="2" y="1" width="6" height="1"/><rect x="1" y="2" width="3" height="3"/><rect x="6" y="2" width="3" height="3"/><rect x="4" y="2" width="2" height="1"/><rect x="4" y="4" width="2" height="1"/><rect x="2" y="5" width="6" height="1"/><rect x="3" y="6" width="4" height="1"/><rect x="4" y="7" width="2" height="2"/></svg></button>
+   </div>
+
+   <div class="sheet" id="sheet">
+    <div class="grab" id="grab" aria-label="Expand"><i></i></div>
+    <div class="pane" id="browse">
+     <label class="search"><svg viewBox="0 0 10 10" fill="#222d35"><rect x="2" y="0" width="4" height="1"/><rect x="1" y="1" width="1" height="1"/><rect x="6" y="1" width="1" height="1"/><rect x="0" y="2" width="1" height="4"/><rect x="7" y="2" width="1" height="4"/><rect x="1" y="6" width="1" height="1"/><rect x="6" y="6" width="2" height="1"/><rect x="2" y="7" width="4" height="1"/><rect x="7" y="7" width="1" height="1"/><rect x="8" y="8" width="2" height="2"/></svg>
+      <input id="q" type="text" placeholder="Search places" autocomplete="off" spellcheck="false"></label>
+     <div class="tabs" role="tablist" hidden>
+      <button class="on" id="tabRecent" role="tab">RECENTS</button>
+      <button id="tabPlaces" role="tab">PLACES</button>
+     </div>
+     <div class="list" id="list"></div>
+    </div>
+    <div class="pane" id="card" hidden>
+     <div class="card-head">
+      <div class="txt"><div class="name" id="cName"></div><div class="addr" id="cAddr"></div></div>
+      <button class="pbtn" id="cClose" aria-label="Close"><svg viewBox="0 0 8 8" fill="currentColor"><rect x="0" y="0" width="2" height="2"/><rect x="2" y="2" width="4" height="4"/><rect x="6" y="0" width="2" height="2"/><rect x="0" y="6" width="2" height="2"/><rect x="6" y="6" width="2" height="2"/></svg></button>
+     </div>
+     <div class="facts">
+      <div class="panel fact"><b id="cDist">0.6 MI</b><small>AWAY</small></div>
+      <div class="panel fact"><b id="cTime">3 MIN</b><small>BY CAR</small></div>
+      <div class="panel fact"><b id="cTag">WORK</b><small>TYPE</small></div>
+     </div>
+     <button class="go" id="goBtn"><svg viewBox="0 0 7 7" fill="#fff"><rect x="3" y="0" width="1" height="1"/><rect x="2" y="1" width="3" height="2"/><rect x="1" y="3" width="5" height="2"/><rect x="0" y="5" width="2" height="2"/><rect x="5" y="5" width="2" height="2"/></svg>NAVIGATE</button>
+     <div class="warn" id="warn">BATTERY 1% · 0.1 MI LEFT</div>
+    </div>
+   </div>
+   <div class="modal" id="modal" role="alertdialog" aria-labelledby="mTitle">
+    <div class="panel">
+     <svg class="big-batt" viewBox="0 0 48 22"><rect x="2" y="2" width="40" height="18" fill="#fffde6" stroke="#222d35" stroke-width="4"/><rect x="43" y="7" width="5" height="8" fill="#222d35"/><rect x="6" y="6" width="3" height="10" fill="#ff526f"/><rect x="20" y="5" width="4" height="8" fill="#222d35"/><rect x="20" y="15" width="4" height="3" fill="#222d35"/></svg>
+     <h2 id="mTitle">NOT ENOUGH<br>BATTERY</h2>
+     <p id="mText">YOUR TESLA IS AT 1%.</p>
+     <button class="go ok" id="mOk">OK</button>
+    </div>
+   </div>
+   <div class="panel toast" id="toast"></div>
+  </div>
+ </div>
+</div>
+
+<script>
+(() => {
+/* =====================================================================
+   The town, in map units (about 1000 x 1000). Roads are polylines through
+   shared nodes, so the road network doubles as the routing graph.
+   ===================================================================== */
+const N = {
+  b0:[60,520], b1:[260,500], b2:[420,560], c1:[500,560], b3:[620,560], b4:[800,520], b5:[970,545],
+  m0:[620,90], m1:[620,240], m2:[620,380], m4:[620,720], m5:[620,930],
+  p0:[90,380], pf:[270,380], p1:[380,380], p3:[880,380],
+  e1:[880,240], e2:[880,90], f1:[250,700], f2:[240,930], r1:[380,215], k2:[800,720],
+};
+const ROADS = [
+  { name:"Butterfield Ln", pts:["b0","b1","b2","c1","b3","b4","b5"] },
+  { name:"Molar Ave",      pts:["m0","m1","m2","b3","m4","m5"] },
+  { name:"Pearl St",       pts:["p0","pf","p1","m2","p3"] },
+  { name:"Enamel Rd",      pts:["m1","e1"] },
+  { name:"Hospital Dr",    pts:["e2","e1","p3"] },
+  { name:"Floss Way",      pts:["pf","b1","f1","f2"] },
+  { name:"Root Ct",        pts:["p1","r1"] },
+  { name:"Crown Loop",     pts:["b4","k2","m4"] },
+];
+// roof colour, body colour, size in map pixels, and a small mark painted on the roof
+const PLACES = [
+  { id:"home",  name:"Claire's Home",                addr:"31 Butterfield Ln", at:[500,612], tag:"Home",  roof:"#7457e6", body:"#fff1c9", size:[24,18], mark:"heart" },
+  { id:"smile", name:"Dental Office", addr:"12 Pearl St",       at:[300,328], tag:"Work",  roof:"#56bde0", body:"#ffffff", size:[26,18], mark:"tooth" },
+  { id:"hosp",  name:"Hospital",        addr:"1 Hospital Dr",     at:[940,250], tag:"Work",  roof:"#ff526f", body:"#ffffff", size:[34,24], mark:"cross" },
+  { id:"lab",   name:"Dental Lab",              addr:"88 Floss Way",      at:[185,760], tag:"Lab",   roof:"#3f9e6a", body:"#e9f4ea", size:[24,18], mark:"tooth" },
+  { id:"mart",  name:"Grocery Store",       addr:"5 Molar Ave",       at:[672,300], tag:"Grocery", roof:"#ffe260", body:"#fff1c9", size:[26,18], mark:"stripes" },
+  { id:"cafe",  name:"Cafe",                          addr:"20 Molar Ave",      at:[672,820], tag:"Cafe",  roof:"#c9653a", body:"#fbe3c8", size:[24,18], mark:"cup" },
+  { id:"apoth", name:"Pharmacy",                addr:"3 Root Ct",         at:[436,250], tag:"Shop",  roof:"#2f8f8a", body:"#efe6d2", size:[22,18], mark:"leaf" },
+  { id:"lot",   name:"Future Clinic Lot",             addr:"Crown Loop & Butterfield Ln", at:[720,640], tag:"Someday", lot:true, size:[30,22] },
+];
+const byId = Object.fromEntries(PLACES.map(p => [p.id, p]));
+const MI_PER_UNIT = 1.6 / 1000, MPH = 25;
+// ?duo: the phone unfolded into a landscape tablet on the game's bottom screen, with the sheet docked on the right.
+const DUO = new URLSearchParams(location.search).has("duo");
+if (DUO) document.body.classList.add("duo");
+const SCREEN_W = DUO ? 512 : 390, SCREEN_H = DUO ? 384 : 566, SIDE = DUO ? 228 : 0;
+
+/* ---------- routing ---------- */
+const nodes = Object.fromEntries(Object.entries(N).map(([k, v]) => [k, { x:v[0], y:v[1] }]));
+const edges = [];
+for (const road of ROADS) for (let i = 0; i < road.pts.length - 1; i++) {
+  const a = road.pts[i], b = road.pts[i + 1];
+  edges.push({ a, b, name: road.name, len: Math.hypot(nodes[a].x - nodes[b].x, nodes[a].y - nodes[b].y) });
+}
+function snap(x, y) {
+  let best = null;
+  for (const e of edges) {
+    const A = nodes[e.a], B = nodes[e.b], dx = B.x - A.x, dy = B.y - A.y;
+    const t = Math.max(0, Math.min(1, ((x - A.x) * dx + (y - A.y) * dy) / (dx * dx + dy * dy)));
+    const px = A.x + dx * t, py = A.y + dy * t, d = Math.hypot(x - px, y - py);
+    if (!best || d < best.d) best = { e, t, x: px, y: py, d };
+  }
+  return best;
+}
+// Shortest path along the roads between two map points, with a short driveway at each end.
+function route(from, to) {
+  const S = snap(from.x, from.y), T = snap(to.x, to.y);
+  const adj = {};
+  const link = (a, b, len) => { (adj[a] ||= []).push({ to: b, len }); (adj[b] ||= []).push({ to: a, len }); };
+  for (const e of edges) if (e !== S.e && e !== T.e) link(e.a, e.b, e.len);
+  const pos = { ...nodes, S: { x: S.x, y: S.y }, T: { x: T.x, y: T.y } };
+  if (S.e === T.e) {
+    const e = S.e, [lo, loP, hi, hiP] = S.t < T.t ? ["S", S, "T", T] : ["T", T, "S", S];
+    link(e.a, lo, e.len * loP.t); link(lo, hi, e.len * (hiP.t - loP.t)); link(hi, e.b, e.len * (1 - hiP.t));
+  } else {
+    for (const [P, id] of [[S, "S"], [T, "T"]]) { link(P.e.a, id, P.e.len * P.t); link(id, P.e.b, P.e.len * (1 - P.t)); }
+  }
+  const dist = { S: 0 }, prev = {}, done = new Set();
+  for (;;) {
+    let u = null;
+    for (const k in dist) if (!done.has(k) && (u === null || dist[k] < dist[u])) u = k;
+    if (u === null || u === "T") break;
+    done.add(u);
+    for (const n of adj[u] || []) { const d = dist[u] + n.len; if (dist[n.to] === undefined || d < dist[n.to]) { dist[n.to] = d; prev[n.to] = u; } }
+  }
+  const ids = ["T"]; while (ids[0] !== "S") ids.unshift(prev[ids[0]]);
+  const pts = [{ x: from.x, y: from.y }, ...ids.map(k => pos[k]), { x: to.x, y: to.y }];
+  let len = 0; for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+  return { pts, len };
+}
+const miles = u => u * MI_PER_UNIT;
+const fmtMi = u => { const m = miles(u); return m < .05 ? "HERE" : `${m.toFixed(1)} MI`; };
+const minutes = u => Math.max(1, Math.round(miles(u) / MPH * 60));
+
+/* =====================================================================
+   Pixel map. The whole district is painted once into a small bitmap (half a
+   bitmap pixel per map unit) using only crisp filled rectangles, then shown at
+   whole-number zoom with smoothing off, like the rest of the game.
+   ===================================================================== */
+const BPU = .5, ORG = 80, MAP_PX = Math.round((1000 + ORG * 2) * BPU);  // 580 x 580
+const bx = x => Math.round((x + ORG) * BPU), by = y => Math.round((y + ORG) * BPU);
+let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const C = {
+  ink:"#222d35", grass:"#07e66e", grassDark:"#02b95c", grassLight:"#5cf29e", path:"#fff8ca", pathEdge:"#d6cc9a",
+  water:"#56bde0", waterDark:"#2f8fc0", waterLight:"#b9ecff", leaf:"#2fa84f", leafDark:"#1d6b3a", leafLight:"#6fdc87",
+  trunk:"#7a4a2a", shadow:"#04a654", dirt:"#c8a26a", dirtDark:"#a07e4c", window:"#56bde0", door:"#8a5a33",
+};
+function paintMap() {
+  const cv = document.createElement("canvas"); cv.width = cv.height = MAP_PX;
+  const g = cv.getContext("2d");
+  const R = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+  const ellipse = (cx, cy, rx, ry, c) => { for (let y = -ry; y <= ry; y++) { const hw = Math.round(rx * Math.sqrt(Math.max(0, 1 - (y * y) / (ry * ry)))); R(cx - hw, cy + y, hw * 2 + 1, 1, c); } };
+
+  // grass with little tufts
+  R(0, 0, MAP_PX, MAP_PX, C.grass);
+  for (let i = 0; i < 1400; i++) {
+    const x = Math.floor(rnd() * MAP_PX), y = Math.floor(rnd() * MAP_PX), c = rnd() < .8 ? C.grassDark : C.grassLight;
+    R(x, y, 1, 1, c); R(x + 2, y, 1, 1, c); R(x + 1, y - 1, 1, 2, c);
+  }
+  // pond
+  { const cx = bx(850), cy = by(880); ellipse(cx, cy + 1, 46, 37, C.ink); ellipse(cx, cy, 45, 36, C.ink); ellipse(cx, cy, 43, 34, C.water); ellipse(cx, cy + 4, 39, 28, C.waterDark); ellipse(cx, cy - 2, 38, 27, C.water);
+    for (let i = 0; i < 6; i++) R(cx - 28 + i * 9, cy - 14 + (i % 3) * 7, 5, 1, C.waterLight); }
+  // a little garden behind Claire's home
+  { const x = bx(455), y = by(645); R(x - 1, y - 1, 46, 22, C.ink); R(x, y, 44, 20, C.dirt); R(x, y + 18, 44, 2, C.dirtDark);
+    for (let i = 0; i < 7; i++) for (let j = 0; j < 2; j++) { const fx = x + 3 + i * 6, fy = y + 4 + j * 8; R(fx, fy + 2, 1, 3, C.leafDark); R(fx - 1, fy, 3, 2, j ? "#ff526f" : "#ffe260"); } }
+
+  // roads: an edge stamp, then the cream fill, so crossings join cleanly
+  const stampLine = (A, B, half, c) => {
+    const x0 = bx(A.x), y0 = by(A.y), x1 = bx(B.x), y1 = by(B.y), n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) || 1;
+    for (let i = 0; i <= n; i++) { const x = Math.round(x0 + (x1 - x0) * i / n), y = Math.round(y0 + (y1 - y0) * i / n); R(x - half, y - half, half * 2 + 1, half * 2 + 1, c); }
+  };
+  for (const e of edges) stampLine(nodes[e.a], nodes[e.b], 6, C.pathEdge);
+  for (const e of edges) stampLine(nodes[e.a], nodes[e.b], 5, C.path);
+  // pavement joints
+  for (const e of edges) {
+    const A = nodes[e.a], B = nodes[e.b], n = Math.round(e.len * BPU / 9), horiz = Math.abs(B.x - A.x) > Math.abs(B.y - A.y);
+    for (let i = 1; i < n; i++) { const x = bx(A.x + (B.x - A.x) * i / n), y = by(A.y + (B.y - A.y) * i / n); horiz ? R(x, y - 4, 1, 9, C.pathEdge) : R(x - 4, y, 9, 1, C.pathEdge); }
+  }
+
+  // keep things off the roads and away from each other
+  const clearOfRoads = (x, y, r) => edges.every(e => {
+    const A = nodes[e.a], B = nodes[e.b], dx = B.x - A.x, dy = B.y - A.y;
+    const t = Math.max(0, Math.min(1, ((x - A.x) * dx + (y - A.y) * dy) / (dx * dx + dy * dy)));
+    return Math.hypot(x - (A.x + dx * t), y - (A.y + dy * t)) > r;
+  });
+  const taken = PLACES.map(p => ({ x: p.at[0], y: p.at[1], r: 52 }));
+  taken.push({ x: 850, y: 880, r: 110 }, { x: 500, y: 680, r: 60 });
+  const free = (x, y, r) => clearOfRoads(x, y, r) && taken.every(t => Math.hypot(t.x - x, t.y - y) > t.r + r * .6);
+
+  // a little house: ink outline, coloured roof with an eave line, windows and a door, hard shadow
+  const ROOFS = ["#c45a4a", "#5a7bd0", "#3f9e6a", "#b8843c", "#d46a8c", "#4a8fa8"];
+  const BODIES = ["#fff1c9", "#f1e2cf", "#e6eef4", "#f6e7e0"];
+  const house = (cx, cy, w, h, roof, body, mark) => {
+    const x = cx - (w >> 1), y = cy - (h >> 1), rh = Math.round(h * .45);
+    R(x + 2, y + 2, w, h, C.shadow);
+    R(x - 1, y - 1, w + 2, h + 2, C.ink);
+    R(x, y, w, h, body);
+    R(x, y, w, rh, roof); R(x, y + rh - 1, w, 1, C.ink);
+    R(x + 1, y + 1, w - 2, 1, "rgba(255,255,255,.35)");
+    for (let i = 3; i < w - 3; i += 4) R(x + i, y + 2, 1, Math.max(1, rh - 4), "rgba(0,0,0,.18)");
+    const wy = y + rh + 2;
+    for (let i = 3; i + 3 <= w - 3; i += 6) { if (Math.abs(x + i + 1 - cx) < 3) continue; R(x + i, wy, 3, 3, C.ink); R(x + i, wy, 2, 2, C.window); }
+    R(cx - 1, y + h - 5, 3, 5, C.door); R(cx - 2, y + h - 6, 5, 1, C.ink);
+    if (mark === "heart") { R(cx - 3, y + 2, 2, 2, "#ff526f"); R(cx + 1, y + 2, 2, 2, "#ff526f"); R(cx - 2, y + 4, 4, 1, "#ff526f"); R(cx - 1, y + 5, 2, 1, "#ff526f"); }
+    if (mark === "cross") { R(cx - 1, y + 2, 3, rh - 4, "#ffffff"); R(cx - 3, y + 4, 7, 2, "#ffffff"); }
+    if (mark === "tooth") { R(cx - 3, y + 2, 7, 3, "#ffffff"); R(cx - 3, y + 5, 2, 2, "#ffffff"); R(cx + 2, y + 5, 2, 2, "#ffffff"); }
+    if (mark === "stripes") for (let i = 0; i < w; i += 4) R(x + i, y + rh - 3, 2, 2, "#ff526f");
+    if (mark === "cup") { R(cx - 2, y + 2, 4, 4, "#ffffff"); R(cx + 2, y + 3, 1, 2, "#ffffff"); }
+    if (mark === "leaf") { R(cx - 1, y + 2, 3, 3, "#9df0a9"); R(cx, y + 5, 1, 2, "#9df0a9"); }
+  };
+  const tree = (x, y) => {
+    R(x - 4, y + 5, 10, 2, C.shadow);
+    R(x, y + 2, 2, 5, C.ink); R(x, y + 2, 1, 4, C.trunk);
+    ellipse(x, y - 1, 6, 5, C.ink); ellipse(x, y - 1, 5, 4, C.leaf); ellipse(x - 1, y - 2, 3, 2, C.leafLight); R(x + 2, y + 1, 3, 1, C.leafDark);
+  };
+
+  // houses along the roads
+  for (const e of edges) {
+    const A = nodes[e.a], B = nodes[e.b], ang = Math.atan2(B.y - A.y, B.x - A.x), nx = -Math.sin(ang), ny = Math.cos(ang);
+    for (let d = 45; d < e.len - 30; d += 66 + rnd() * 24) for (const side of [-1, 1]) {
+      if (rnd() < .3) continue;
+      const off = 40 + rnd() * 6, x = A.x + Math.cos(ang) * d + nx * off * side, y = A.y + Math.sin(ang) * d + ny * off * side;
+      if (!free(x, y, 30)) continue;
+      taken.push({ x, y, r: 40 });
+      house(bx(x), by(y), 16 + Math.floor(rnd() * 3) * 2, 12 + Math.floor(rnd() * 2) * 2, ROOFS[Math.floor(rnd() * ROOFS.length)], BODIES[Math.floor(rnd() * BODIES.length)]);
+    }
+  }
+  // trees in the open grass
+  for (let i = 0; i < 900 && taken.length < 260; i++) {
+    const x = -60 + rnd() * 1120, y = -60 + rnd() * 1120;
+    if (!free(x, y, 22)) continue;
+    taken.push({ x, y, r: 14 }); tree(bx(x), by(y));
+  }
+  // the places themselves
+  for (const p of PLACES) {
+    const x = bx(p.at[0]), y = by(p.at[1]);
+    if (p.lot) {
+      const [w, h] = p.size; R(x - (w >> 1) - 1, y - (h >> 1) - 1, w + 2, h + 2, C.ink); R(x - (w >> 1), y - (h >> 1), w, h, C.dirt);
+      for (let i = 0; i < 18; i++) R(x - (w >> 1) + 2 + Math.floor(rnd() * (w - 4)), y - (h >> 1) + 2 + Math.floor(rnd() * (h - 4)), 1, 1, C.dirtDark);
+      // FOR SALE sign
+      R(x + 6, y - 2, 1, 8, C.ink); R(x + 1, y - 8, 12, 7, C.ink); R(x + 2, y - 7, 10, 5, "#ffffff"); R(x + 3, y - 6, 8, 1, "#ff526f"); R(x + 3, y - 4, 6, 1, "#ff526f");
+      continue;
+    }
+    house(x, y, p.size[0], p.size[1], p.roof, p.body, p.mark);
+  }
+  return cv;
+}
+const mapBitmap = paintMap();
+
+// The route preview is painted into its own bitmap on the same pixel grid.
+const routeBitmap = document.createElement("canvas"); routeBitmap.width = routeBitmap.height = MAP_PX;
+function paintRoute(r) {
+  const g = routeBitmap.getContext("2d"); g.clearRect(0, 0, MAP_PX, MAP_PX);
+  if (!r) return;
+  const pass = (half, c, dots) => {
+    let k = 0;
+    for (let i = 1; i < r.pts.length; i++) {
+      const A = r.pts[i - 1], B = r.pts[i], x0 = bx(A.x), y0 = by(A.y), x1 = bx(B.x), y1 = by(B.y), n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) || 1;
+      for (let j = 0; j <= n; j++, k++) {
+        const x = Math.round(x0 + (x1 - x0) * j / n), y = Math.round(y0 + (y1 - y0) * j / n);
+        g.fillStyle = c;
+        if (dots) { if (k % 7 === 0) g.fillRect(x - 1, y - 1, 2, 2); }
+        else g.fillRect(x - half, y - half, half * 2 + 1, half * 2 + 1);
+      }
+    }
+  };
+  pass(3, C.ink); pass(2, "#7457e6"); pass(0, "#fffde6", true);
+}
+
+/* ---------- the Tesla (dark green, like the car parked outside the clinic), top-down ---------- */
+const CAR = [
+  "...KKKKKKKKKKKKKK...",
+  "..KGGGGGGGGGGGGGGK..",
+  ".KGLGGWWWWWWWWGGGGK.",
+  "KKGGGWBBBBBBBBWGGGGK",
+  "KYGGGWBBBBBBBBWGGGRK",
+  "KYGGGWBBBBBBBBWGGGRK",
+  "KKGGGWBBBBBBBBWGGGGK",
+  ".KGLGGWWWWWWWWGGGGK.",
+  "..KGGGGGGGGGGGGGGK..",
+  "...KKKKKKKKKKKKKK...",
+];
+const carSprite = (() => {
+  const c = document.createElement("canvas"); c.width = 20; c.height = CAR.length; const g = c.getContext("2d");
+  const col = { K:"#222d35", G:"#1f6b4a", L:"#3f9a6e", W:"#9fd4c4", B:"#2a3a48", Y:"#fff3a0", R:"#ff526f" };
+  CAR.forEach((row, y) => [...row].forEach((ch, x) => { if (col[ch]) { g.fillStyle = col[ch]; g.fillRect(x, y, 1, 1); } }));
+  return c;
+})();
+// Claire's head (23 x 17, cut from her walk sheet by tools/characters/make_claire_head.py) marks where
+// she and the car are; a white silhouette of it gives the marker an outline on the map.
+const HEAD_W = 23, HEAD_H = 17;
+const head = new Image(), headLine = document.createElement("canvas");
+headLine.width = HEAD_W; headLine.height = HEAD_H;
+head.onload = () => {
+  const g = headLine.getContext("2d"); g.drawImage(head, 0, 0);
+  g.globalCompositeOperation = "source-in"; g.fillStyle = "#fffde6"; g.fillRect(0, 0, HEAD_W, HEAD_H);
+  draw();
+};
+head.src = "claire-head.png";
+// pin sprite (9 x 12) with an ink outline
+const PIN = ["..KKKKK..",".KCCCCCK.","KCCWWWCCK","KCCWWWCCK","KCCWWWCCK",".KCCCCCK.",".KCCCCCK.","..KCCCK..","..KCCCK..","...KCK...","...KCK...","....K...."];
+const pinSprite = color => { const c = document.createElement("canvas"); c.width = 9; c.height = 12; const g = c.getContext("2d"); PIN.forEach((row, y) => [...row].forEach((ch, x) => { if (ch === ".") return; g.fillStyle = ch === "K" ? C.ink : ch === "W" ? "#fffde6" : color; g.fillRect(x, y, 1, 1); })); return c; };
+const PIN_RED = pinSprite("#ff526f"), PIN_GOLD = pinSprite("#ffe260");
+
+/* =====================================================================
+   Camera: map point (cam.x, cam.y) sits at the centre of the visible map (the
+   part above the sheet). cam.z = screen px per bitmap px; it rests on 1, 2 or 3.
+   ===================================================================== */
+const ZOOMS = [1, 2, 3];
+const cam = { x: 520, y: 520, z: 1 };
+let camAnim = 0;
+const canvas = document.getElementById("map"), ctx = canvas.getContext("2d");
+const sheet = document.getElementById("sheet");
+let phoneScale = 1, night = false;
+let selected = null, showAll = false;
+const me = (() => { const s = snap(byId.home.at[0], byId.home.at[1]); return { x: s.x, y: s.y }; })();
+const visibleH = () => DUO ? SCREEN_H : SCREEN_H - sheet.offsetHeight;
+const centre = () => DUO ? { x: Math.round((SCREEN_W - SIDE) / 2), y: Math.round((64 + SCREEN_H) / 2) } : { x: SCREEN_W / 2, y: Math.round((104 + visibleH()) / 2) };
+const toScreen = (x, y) => { const c = centre(); return { x: c.x + (x - cam.x) * BPU * cam.z, y: c.y + (y - cam.y) * BPU * cam.z }; };
+
+function sizeCanvas() {
+  const dpr = Math.max(1, Math.round((window.devicePixelRatio || 1) * phoneScale));
+  canvas.width = SCREEN_W * dpr; canvas.height = SCREEN_H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.imageSmoothingEnabled = false;
+}
+function draw() {
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = C.grass; ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
+  const o = toScreen(-ORG, -ORG), size = MAP_PX * cam.z, ox = Math.round(o.x), oy = Math.round(o.y);
+  ctx.drawImage(mapBitmap, ox, oy, size, size);
+  ctx.drawImage(routeBitmap, ox, oy, size, size);
+  if (night) { ctx.fillStyle = "rgba(24,30,78,.5)"; ctx.fillRect(0, 0, SCREEN_W, SCREEN_H); }
+  const pz = Math.max(2, Math.round(cam.z * 1.5));
+  for (const p of PLACES) {
+    const isSel = selected && selected.id === p.id;
+    if (!isSel && !showAll) continue;
+    const s = toScreen(p.at[0], p.at[1] - p.size[1] - 6), sc = isSel ? pz + 1 : pz;
+    ctx.drawImage(isSel ? PIN_RED : PIN_GOLD, Math.round(s.x - 4.5 * sc), Math.round(s.y - 12 * sc), 9 * sc, 12 * sc);
+  }
+  // Claire (with the parked Tesla), shown as her head with a light outline and a soft shadow
+  const m = toScreen(me.x, me.y), k = Math.max(1, Math.round(cam.z));
+  const hw = HEAD_W * k, hh = HEAD_H * k, hx = Math.round(m.x - hw / 2), hy = Math.round(m.y - hh / 2);
+  if (head.complete && head.naturalWidth) {
+    ctx.fillStyle = "rgba(34,45,53,.3)"; ctx.fillRect(hx + 2 * k, hy + hh - k, hw - 4 * k, 2 * k);
+    for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) ctx.drawImage(headLine, hx + dx * k, hy + dy * k, hw, hh);
+    ctx.drawImage(head, hx, hy, hw, hh);
+  } else ctx.drawImage(carSprite, Math.round(m.x - 10 * k), Math.round(m.y - CAR.length * k / 2), 20 * k, CAR.length * k);
+  placeTags();
+}
+
+function flyTo(x, y, z, ms = 500) {
+  const from = { ...cam }, t0 = performance.now();
+  cancelAnimationFrame(camAnim);
+  const step = now => {
+    const kk = Math.min(1, (now - t0) / ms), e = kk < .5 ? 4 * kk * kk * kk : 1 - Math.pow(-2 * kk + 2, 3) / 2;
+    cam.x = from.x + (x - from.x) * e; cam.y = from.y + (y - from.y) * e; cam.z = from.z + (z - from.z) * e;
+    if (kk >= 1) cam.z = z;
+    draw();
+    if (kk < 1) camAnim = requestAnimationFrame(step);
+  };
+  camAnim = requestAnimationFrame(step);
+}
+// Fit points into the visible map at the largest whole zoom that holds them.
+function fit(points) {
+  const xs = points.map(p => p.x), ys = points.map(p => p.y);
+  const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+  const w = (maxX - minX) * BPU + 60, h = (maxY - minY) * BPU + 70, availW = SCREEN_W - SIDE - 80, availH = visibleH() - 120;
+  let z = ZOOMS[0]; for (const zz of ZOOMS) if (w * zz <= availW && h * zz <= availH) z = zz;
+  flyTo((minX + maxX) / 2 + 16 / BPU / z, (minY + maxY) / 2, z);
+}
+
+/* ---------- drag to pan, wheel / pinch to zoom, tap a building ---------- */
+let drag = null, moved = false;
+const pointers = new Map();
+const pinchDist = () => { const p = [...pointers.values()]; return p.length < 2 ? 0 : Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y); };
+canvas.addEventListener("pointerdown", e => {
+  canvas.setPointerCapture(e.pointerId); pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  drag = { x: e.clientX, y: e.clientY, cx: cam.x, cy: cam.y, z: cam.z, dist: pinchDist() }; moved = false;
+  cancelAnimationFrame(camAnim); canvas.classList.add("dragging");
+});
+canvas.addEventListener("pointermove", e => {
+  if (!drag || !pointers.has(e.pointerId)) return;
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 4) moved = true;
+  if (pointers.size >= 2 && drag.dist) cam.z = Math.max(1, Math.min(3, drag.z * pinchDist() / drag.dist));
+  else { cam.x = drag.cx - (e.clientX - drag.x) / phoneScale / cam.z / BPU; cam.y = drag.cy - (e.clientY - drag.y) / phoneScale / cam.z / BPU; }
+  draw();
+});
+const endDrag = e => {
+  if (!pointers.has(e.pointerId)) return;
+  pointers.delete(e.pointerId);
+  if (pointers.size) return;
+  canvas.classList.remove("dragging");
+  if (!moved) tapAt(e);
+  if (!ZOOMS.includes(cam.z)) flyTo(cam.x, cam.y, Math.round(cam.z), 200);   // settle on a whole zoom
+  drag = null;
+};
+canvas.addEventListener("pointerup", endDrag); canvas.addEventListener("pointercancel", endDrag);
+canvas.addEventListener("wheel", e => {
+  e.preventDefault();
+  const i = ZOOMS.indexOf(Math.round(cam.z)), next = ZOOMS[Math.max(0, Math.min(ZOOMS.length - 1, i + (e.deltaY < 0 ? 1 : -1)))];
+  if (next !== Math.round(cam.z)) flyTo(cam.x, cam.y, next, 220);
+}, { passive: false });
+function tapAt(e) {
+  const r = canvas.getBoundingClientRect(), x = (e.clientX - r.left) / phoneScale, y = (e.clientY - r.top) / phoneScale;
+  let best = null, bd = 14 * Math.max(1, cam.z);
+  for (const p of PLACES) { const s = toScreen(p.at[0], p.at[1]), d = Math.hypot(s.x - x, s.y - y); if (d < bd) { bd = d; best = p; } }
+  if (best) select(best.id);
+}
+
+/* ---------- street and place tags (pixel font, in screen space) ---------- */
+const tagsEl = document.getElementById("tags");
+const streetTags = ROADS.map(r => {
+  const t = document.createElement("div"); t.className = "tag"; t.textContent = r.name.toUpperCase(); tagsEl.appendChild(t);
+  return { t, pts: r.pts.map(k => nodes[k]) };
+});
+// The point on a road nearest (x, y), so each tag sits on the stretch of road in view.
+const nearestOnRoad = (pts, x, y) => {
+  let best = null;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const A = pts[i], B = pts[i + 1], dx = B.x - A.x, dy = B.y - A.y;
+    const t = Math.max(.12, Math.min(.88, ((x - A.x) * dx + (y - A.y) * dy) / (dx * dx + dy * dy)));
+    const px = A.x + dx * t, py = A.y + dy * t, d = Math.hypot(px - x, py - y);
+    if (!best || d < best.d) best = { x: px, y: py, d };
+  }
+  return best;
+};
+const placeTag = document.createElement("div"); placeTag.className = "tag place"; tagsEl.appendChild(placeTag);
+function placeTags() {
+  const showStreets = cam.z >= 1.6, bottom = visibleH() - 10;
+  // aim a little off Claire and the centre so tags do not sit on top of her
+  const ax = cam.x + 60, ay = cam.y - 40;
+  const car = toScreen(me.x, me.y), shown = [{ x: car.x, y: car.y }];   // never cover the car
+  for (const s of streetTags) {
+    const n = nearestOnRoad(s.pts, ax, ay), p = toScreen(n.x, n.y);
+    const ok = showStreets && p.y < bottom && p.y > (DUO ? 70 : 100) && p.x > 40 && p.x < SCREEN_W - SIDE - 70 && shown.every(q => Math.abs(q.x - p.x) > 90 || Math.abs(q.y - p.y) > 22);
+    if (ok) shown.push(p);
+    s.t.style.left = Math.round(p.x) + "px"; s.t.style.top = Math.round(p.y) + "px"; s.t.style.opacity = ok ? 1 : 0;
+  }
+  if (selected) {
+    const p = toScreen(selected.at[0], selected.at[1] + selected.size[1] + 4);
+    placeTag.textContent = selected.name.toUpperCase(); placeTag.style.left = Math.round(p.x) + "px"; placeTag.style.top = Math.round(p.y) + "px";
+    placeTag.style.opacity = p.y < bottom - 14 ? 1 : 0;
+  } else placeTag.style.opacity = 0;
+}
+
+/* =====================================================================
+   Sheet: search + Recents / Places, and a place card. Picking a place previews
+   the way there; travel itself is not hooked up yet.
+   ===================================================================== */
+const $ = id => document.getElementById(id);
+const EMBED = new URLSearchParams(location.search).has("embed");
+const list = $("list"), q = $("q");
+let tab = "recent", sheetState = "peek";
+let recents = [];
+try { recents = JSON.parse(localStorage.getItem("butterland-recents") || "null") || []; } catch (e) {}
+if (!recents.length) recents = [{ id:"smile", t: Date.now() - 7 * 864e5 }, { id:"lab", t: Date.now() - 6 * 864e5 }, { id:"cafe", t: Date.now() - 864e5 }];
+const saveRecents = () => { try { localStorage.setItem("butterland-recents", JSON.stringify(recents.slice(-20))); } catch (e) {} };
+const ago = t => { const d = Math.floor((Date.now() - t) / 864e5); return d <= 0 ? "TODAY" : d === 1 ? "YESTERDAY" : d < 7 ? `${d} DAYS AGO` : d < 14 ? "1 WEEK AGO" : `${Math.floor(d / 7)} WEEKS AGO`; };
+const PIN_ICON = `<svg viewBox="0 0 7 9" fill="#222d35"><rect x="1" y="0" width="5" height="1"/><rect x="0" y="1" width="7" height="4"/><rect x="1" y="5" width="5" height="1"/><rect x="2" y="6" width="3" height="1"/><rect x="3" y="7" width="1" height="2"/><rect x="2" y="2" width="3" height="2" fill="#fffde6"/></svg>`;
+const itemHTML = p => `<button class="item" data-id="${p.id}"><div class="txt"><div class="name">${p.name}</div><div class="addr">${p.addr}</div></div><div class="chip">${PIN_ICON}<span>${fmtMi(route(me, { x: p.at[0], y: p.at[1] }).len)}</span></div></button>`;
+function renderList() {
+  const term = q.value.trim().toLowerCase();
+  let html = "";
+  if (term) {
+    const hits = PLACES.filter(p => (p.name + " " + p.addr + " " + p.tag).toLowerCase().includes(term));
+    html = hits.length ? hits.map(itemHTML).join("") : `<div class="empty">NOTHING CALLED<br>"${q.value.trim().toUpperCase()}"</div>`;
+  } else html = PLACES.filter(p => p.id !== "home").map(itemHTML).join("");   // one plain list of places around town
+  list.innerHTML = html;
+}
+list.addEventListener("click", e => { const b = e.target.closest(".item"); if (b) select(b.dataset.id); });
+const setTab = t => { tab = t; $("tabRecent").classList.toggle("on", t === "recent"); $("tabPlaces").classList.toggle("on", t === "places"); renderList(); };
+$("tabRecent").onclick = () => setTab("recent");
+$("tabPlaces").onclick = () => setTab("places");
+q.addEventListener("focus", () => setSheet("full"));
+q.addEventListener("input", renderList);
+q.addEventListener("keydown", e => {
+  if (e.key === "Enter") { const first = list.querySelector(".item"); if (first) select(first.dataset.id); }
+  if (e.key === "Escape") { q.value = ""; q.blur(); renderList(); setSheet("peek"); }
+});
+function setSheet(state) {
+  sheetState = state;
+  sheet.classList.toggle("full", state === "full"); sheet.classList.toggle("card", state === "card");
+  $("browse").hidden = state === "card"; $("card").hidden = state !== "card";
+  const t0 = performance.now(); const keep = now => { draw(); if (now - t0 < 360) requestAnimationFrame(keep); }; requestAnimationFrame(keep);
+}
+$("grab").onclick = () => { if (sheetState === "peek") setSheet("full"); else if (sheetState === "full") { q.blur(); setSheet("peek"); } };
+
+function select(id) {
+  selected = byId[id]; q.blur();
+  const r = route(me, { x: selected.at[0], y: selected.at[1] }); lastRoute = r;
+  paintRoute(miles(r.len) < .05 ? null : r);
+  $("cName").textContent = selected.name.toUpperCase();
+  $("cAddr").textContent = selected.addr.toUpperCase();
+  $("cDist").textContent = fmtMi(r.len);
+  $("cTime").textContent = miles(r.len) < .05 ? "—" : `${minutes(r.len)} MIN`;
+  $("cTag").textContent = selected.tag.toUpperCase();
+  recents.push({ id, t: Date.now() }); saveRecents();
+  setSheet("card");
+  setTimeout(() => fit([...r.pts, { x: selected.at[0], y: selected.at[1] - 40 }]), 20);
+}
+function clearSelection() {
+  selected = null; paintRoute(null); setSheet("peek"); renderList();
+  setTimeout(() => flyTo(me.x, me.y, 2), 20);
+}
+$("cClose").onclick = clearSelection;
+
+/* ---------- top controls ---------- */
+/* ---------- the car: 1% battery, not enough to drive anywhere ---------- */
+const BATTERY = 1, RANGE_UNITS = .1 / MI_PER_UNIT;   // 0.1 mi
+let lastRoute = null;
+$("goBtn").onclick = () => {
+  if (!selected) return;
+  const need = lastRoute ? fmtMi(lastRoute.len) : "";
+  $("mText").innerHTML = lastRoute && miles(lastRoute.len) >= .05
+    ? `YOUR TESLA IS AT ${BATTERY}%<br>(0.1 MI OF RANGE).<br>${selected.name.toUpperCase()} IS ${need} AWAY.<br>PLUG IN AT HOME FIRST.`
+    : `YOUR TESLA IS AT ${BATTERY}%.<br>IT'S ALREADY PARKED HERE.`;
+  const m = $("modal"); m.classList.add("show");
+  if (EMBED) parent.postMessage({ type: "tesla-drive" }, "*");   // the game shows its TESLA notice
+  const panel = m.querySelector(".panel"); panel.classList.remove("shake"); void panel.offsetWidth; panel.classList.add("shake");
+  $("mOk").focus();
+};
+$("mOk").onclick = () => $("modal").classList.remove("show");
+$("modal").addEventListener("click", e => { if (e.target.id === "modal") $("modal").classList.remove("show"); });
+$("back").onclick = () => {
+  if (selected) clearSelection();
+  else if (sheetState === "full") { q.value = ""; q.blur(); renderList(); setSheet("peek"); }
+  else if (EMBED) closePhone();
+  else toast("YOU'RE ON THE MAP");
+};
+$("recenter").onclick = () => flyTo(me.x, me.y, Math.max(2, Math.round(cam.z)));
+$("mode").onclick = () => { night = !night; $("mode").classList.toggle("on", night); draw(); toast(night ? "NIGHT MAP" : "DAY MAP"); };
+$("pinsBtn").onclick = () => {
+  showAll = !showAll; $("pinsBtn").classList.toggle("on", showAll);
+  if (showAll && !selected) fit(PLACES.map(p => ({ x: p.at[0], y: p.at[1] })));
+  draw(); toast(showAll ? "ALL PLACES SHOWN" : "PINS HIDDEN");
+};
+$("share").onclick = () => toast("CAR LOCATION SENT. MEOW!");
+let toastT = 0;
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 1600); }
+
+/* ---------- clock, scale to fit, start ---------- */
+const tickClock = () => { $("clock").textContent = new Date().toLocaleTimeString([], { hour:"numeric", minute:"2-digit" }).replace(/\s?[AP]M/i, ""); };
+tickClock(); setInterval(tickClock, 15000);
+function fitPhone() {
+  if (DUO) {
+    // A touch bigger than the game's screen and sitting a little low, so the shell runs off the edges.
+    phoneScale = Math.min(innerWidth / 536, innerHeight / 408) * .98;
+    const x = (innerWidth - 536 * phoneScale) / 2, y = (innerHeight - 408 * phoneScale) / 2 + innerHeight * .07;
+    $("phone").style.transform = `translate(${x}px, ${y}px) scale(${phoneScale})`;
+  } else {
+    phoneScale = Math.min(innerWidth * .94 / 414, innerHeight * .94 / 590);
+    $("phone").style.transform = `scale(${phoneScale})`;
+  }
+  sizeCanvas(); draw();
+}
+addEventListener("resize", fitPhone);
+$("screen").addEventListener("scroll", e => { e.currentTarget.scrollTop = 0; e.currentTarget.scrollLeft = 0; });
+fitPhone(); renderList();
+document.fonts?.ready.then(draw);
+setTimeout(() => flyTo(me.x, me.y, 2, 800), 800);
+
+/* ---------- inside the game: transparent page, and ways to put the phone away ---------- */
+function closePhone() { $("modal").classList.remove("show"); parent.postMessage({ type: "phone-close" }, "*"); }
+if (EMBED) {
+  document.body.classList.add("embed");
+  document.querySelector(".stage").addEventListener("click", e => { if (!e.target.closest(".phone")) closePhone(); });
+}
+addEventListener("keydown", e => {
+  // On the bottom screen the game's B (Z) and Y (A) keys put the phone away too, unless typing a search.
+  if (DUO && EMBED && document.activeElement !== q && /^[za]$/i.test(e.key)) { closePhone(); return; }
+  if (e.key !== "Escape") return;
+  if ($("modal").classList.contains("show")) $("modal").classList.remove("show");
+  else if (EMBED && document.activeElement !== q) closePhone();
+});
+})();
+</script>
+</body>
+</html>
