@@ -4,6 +4,8 @@ A cozy little pixel game about Claire and her four cats (Michael, Sashi, Ollie a
 
 **Play:** https://yikolim.github.io/butterland/ (works on phones, tablets and computers; add `?classic` for the plain DS Lite layout).
 
+> **A note on proportions:** this handheld is inspired by the Nintendo 2DS / 3DS family, not a copy of it. The original screen and shell ratios have been tweaked to make the best use of modern phone, foldable and computer screens: the top screen is a wide 5:3 (400×240), the two halves are resized to fit the frame, and the buttons are made larger for thumbs. It is a fan-made tribute and is not affiliated with or endorsed by Nintendo.
+
 The handheld edition lives in `app/ds/`. Build it with `sh tools/build-pocket.sh`, or build the static site for GitHub Pages with `sh tools/build-pages.sh` (output in `site/`, published to the `gh-pages` branch).
 
 ## Run locally
