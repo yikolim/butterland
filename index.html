@@ -116,7 +116,7 @@ canvas { display: block; width: calc(var(--u)*76); height: calc(var(--u)*57); im
   box-shadow: 0 0 0 calc(var(--u)*.5) rgba(255,255,255,.85), 0 0 0 calc(var(--u)*.9) rgba(196,140,146,.45); }
 /* a pink cap, the same pink as the buttons, sitting in the thin ring */
 .knob { position: absolute; left: 50%; top: 50%; width: 84%; height: 84%; margin: -42% 0 0 -42%; border-radius: 50%; transition: transform .08s ease-out;
-  background: radial-gradient(circle at 42% 35%, #fff1f1 0%, #f6d6d6 30%, var(--btn) 62%, #dcaaab 100%);
+  background: radial-gradient(circle at 40% 30%, #fff1f1 0%, #f6d6d6 30%, var(--btn) 62%, #dcaaab 100%);
   box-shadow: 0 calc(var(--u)*.6) calc(var(--u)*.8) rgba(90,40,48,.32), inset 0 calc(var(--u)*-.5) calc(var(--u)*.6) rgba(150,90,95,.35); }
 .knob::after { content: ""; position: absolute; inset: 22%; border-radius: 50%; background: radial-gradient(circle at 50% 60%, rgba(255,255,255,.35), rgba(220,160,165,.25) 70%);
   box-shadow: inset 0 calc(var(--u)*.4) calc(var(--u)*.6) rgba(150,90,96,.3); }
@@ -160,7 +160,7 @@ canvas { display: block; width: calc(var(--u)*76); height: calc(var(--u)*57); im
 .face { width: calc(var(--u)*26); height: calc(var(--u)*26); position: relative; }
 .btn {
   position: absolute; width: calc(var(--u)*8.6); height: calc(var(--u)*8.6); border-radius: 50%;
-  background: radial-gradient(circle at 40% 30%, #fff1f1 0%, #f6d6d6 30%, var(--btn) 60%, #dcaaab 100%);
+  background: radial-gradient(circle at 40% 30%, #fff1f1 0%, #f6d6d6 30%, var(--btn) 62%, #dcaaab 100%);
   box-shadow:
     0 0 0 calc(var(--u)*.45) #9c6a6d,                       /* gap between key and shell */
     0 0 0 calc(var(--u)*.85) rgba(255,255,255,.5),            /* shell lip catching light */
@@ -528,9 +528,9 @@ canvas { display: block; width: calc(var(--u)*76); height: calc(var(--u)*57); im
     return out;
   }
   function onPointer(e) {
-    if (e.target.closest("canvas")) return;
     if (e.type === "pointerdown" && e.target.closest("#stick")) { e.preventDefault(); stickPointer = e.pointerId; stickEl.classList.add("dragging"); }
     if (e.pointerId === stickPointer) { sources.pointer.set(e.pointerId, new Set(stickDirs(e.clientX, e.clientY))); recompute(); return; }
+    if (e.target.closest("canvas")) return;
     if (e.type === "pointerdown") { e.preventDefault(); e.target.releasePointerCapture?.(e.pointerId); }
     if (e.type === "pointermove" && !sources.pointer.has(e.pointerId)) return;
     sources.pointer.set(e.pointerId, new Set(buttonsAt(e.clientX, e.clientY)));
