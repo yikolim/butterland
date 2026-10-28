@@ -41,16 +41,13 @@ body{background:#d2d6de;overflow:hidden;font-family:-apple-system,"SF Pro Displa
 .glass{position:absolute;inset:0;border-radius:31px;overflow:hidden;background:#e8c9cb}
 .top .slab{bottom:0;border-radius:35px 35px 0 0}.bot .slab{top:0;border-radius:0 0 35px 35px}
 .top .glass,.top .glare{border-radius:31px 31px 0 0}.bot .glass,.bot .glare{border-radius:0 0 31px 31px}
-.glass iframe{position:absolute;left:0;width:600px;height:750px;border:0;display:block;filter:saturate(.7) contrast(.93) brightness(1.02)}
+.glass iframe{position:absolute;left:0;width:600px;height:750px;border:0;display:block}
 .top .glass iframe{top:0;pointer-events:none}
 .bot .glass iframe{top:-380px}
 /* light on the glass */
 .glare{position:absolute;inset:0;border-radius:31px;pointer-events:none;
   background:linear-gradient(115deg,rgba(255,255,255,.16) 0%,rgba(255,255,255,.05) 28%,transparent 42%,transparent 70%,rgba(255,255,255,.06) 100%)}
 .bot .glare{background:linear-gradient(180deg,rgba(255,255,255,.12),transparent 35%,transparent 80%,rgba(0,0,0,.08))}
-/* thickness: the near edge of the bottom half */
-.edge{position:absolute;left:-4px;right:-4px;bottom:-4px;height:12px;transform-origin:50% 100%;
-  transform:rotateX(-90deg);border-radius:0 0 12px 12px;background:linear-gradient(90deg,#b99c9f,#d6b9bb 20%,#c8aaad 50%,#d6b9bb 80%,#b99c9f)}
 .shadow{position:absolute;left:-60px;right:-60px;top:calc(var(--H) * .78);height:90px;border-radius:50%;
   background:radial-gradient(closest-side,rgba(60,70,110,.30),rgba(60,70,110,.10) 60%,transparent);filter:blur(10px);
   transform:translateY(40px)}
@@ -63,7 +60,7 @@ body{background:#d2d6de;overflow:hidden;font-family:-apple-system,"SF Pro Displa
   <div class="duo">
     <div class="case"></div>
     <div class="half top"><div class="slab"></div><div class="glass"><iframe id="mirror" tabindex="-1" title="Top screen"></iframe></div><div class="glare"></div></div>
-    <div class="half bot"><div class="slab"></div><div class="glass"><iframe id="game" title="Butterland"></iframe></div><div class="glare"></div><div class="edge"></div></div>
+    <div class="half bot"><div class="slab"></div><div class="glass"><iframe id="game" title="Butterland"></iframe></div><div class="glare"></div></div>
   </div>
 </div>
 <script>
