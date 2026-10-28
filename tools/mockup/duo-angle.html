@@ -78,9 +78,16 @@ addEventListener("resize",fit);fit();
 
 // The game draws its own hinge strip (L / R and a dark bar) across the fold; hide it in both
 // copies, and paint the page behind the panels shell pink so their rounded corners blend in.
-for(const f of [game,mirror])f.addEventListener("load",()=>{
-  try{const st=f.contentDocument.createElement("style");st.textContent="#hinge{display:none!important}html,body,#stage,#ds{background:#efc9cb!important}";f.contentDocument.head.append(st)}catch(e){}
-});
+// Checked every frame, so it also holds if a page reloads.
+function cleanFold(f){
+  try{
+    const doc=f.contentDocument;
+    if(!doc||!doc.head||doc.getElementById("mockup-fold"))return;
+    const st=doc.createElement("style");st.id="mockup-fold";
+    st.textContent="#hinge{display:none!important}html,body,#stage,#ds{background:#efc9cb!important}";
+    doc.head.append(st);
+  }catch(e){}
+}
 
 // The top screen shows the playable game's top canvas, drawn over a quiet copy of the page.
 let live=null,copy=null;
@@ -97,6 +104,7 @@ function hook(){
   }catch(e){return false}
 }
 function loop(){
+  cleanFold(game);cleanFold(mirror);
   if(!copy){hook()}
   else if(live){
     if(copy.width!==live.width||copy.height!==live.height){copy.width=live.width;copy.height=live.height}
