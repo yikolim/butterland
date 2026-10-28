@@ -31,10 +31,16 @@ body{background:#d2d6de;overflow:hidden;font-family:-apple-system,"SF Pro Displa
 .half{position:absolute;left:0;width:var(--W);height:var(--H);transform-style:preserve-3d}
 .half.top{bottom:0;transform-origin:50% 100%;transform:rotateX(var(--lean,0deg))}
 .half.bot{top:0;transform-origin:50% 0;transform:rotateX(var(--open))}
+/* the iPhone Duo's own case: one thin pale frosted shell around both halves, a shade off the backdrop */
+.case{position:absolute;left:-9px;right:-9px;top:calc(-1 * var(--H) - 9px);height:calc(2 * var(--H) + 18px);border-radius:44px;
+  background:rgba(255,255,255,.2);box-shadow:inset 0 0 0 1px rgba(255,255,255,.38),inset 0 2px 0 rgba(255,255,255,.3),0 1px 2px rgba(60,80,120,.08)}
+/* The two halves meet flush at the fold, so nothing shows between the screens. */
 .slab{position:absolute;inset:-4px;border-radius:35px;
   background:linear-gradient(180deg,#eccfd0,#dcbcbe 50%,#cfb0b3);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.55)}
 .glass{position:absolute;inset:0;border-radius:31px;overflow:hidden;background:#e8c9cb}
+.top .slab{bottom:0;border-radius:35px 35px 0 0}.bot .slab{top:0;border-radius:0 0 35px 35px}
+.top .glass,.top .glare{border-radius:31px 31px 0 0}.bot .glass,.bot .glare{border-radius:0 0 31px 31px}
 .glass iframe{position:absolute;left:0;width:600px;height:750px;border:0;display:block;filter:saturate(.7) contrast(.93) brightness(1.02)}
 .top .glass iframe{top:0;pointer-events:none}
 .bot .glass iframe{top:-380px}
@@ -42,11 +48,9 @@ body{background:#d2d6de;overflow:hidden;font-family:-apple-system,"SF Pro Displa
 .glare{position:absolute;inset:0;border-radius:31px;pointer-events:none;
   background:linear-gradient(115deg,rgba(255,255,255,.16) 0%,rgba(255,255,255,.05) 28%,transparent 42%,transparent 70%,rgba(255,255,255,.06) 100%)}
 .bot .glare{background:linear-gradient(180deg,rgba(255,255,255,.12),transparent 35%,transparent 80%,rgba(0,0,0,.08))}
-/* thickness: the near edge of the bottom half and the hinge barrel */
+/* thickness: the near edge of the bottom half */
 .edge{position:absolute;left:-4px;right:-4px;bottom:-4px;height:12px;transform-origin:50% 100%;
   transform:rotateX(-90deg);border-radius:0 0 12px 12px;background:linear-gradient(90deg,#b99c9f,#d6b9bb 20%,#c8aaad 50%,#d6b9bb 80%,#b99c9f)}
-.hinge{position:absolute;left:28px;right:28px;top:-9px;height:18px;border-radius:9px;transform:translateZ(-6px);
-  background:linear-gradient(#dcc0c2,#bfa2a5 55%,#a88d90)}
 .shadow{position:absolute;left:-60px;right:-60px;top:calc(var(--H) * .78);height:90px;border-radius:50%;
   background:radial-gradient(closest-side,rgba(60,70,110,.30),rgba(60,70,110,.10) 60%,transparent);filter:blur(10px);
   transform:translateY(40px)}
@@ -57,8 +61,8 @@ body{background:#d2d6de;overflow:hidden;font-family:-apple-system,"SF Pro Displa
 <div class="scene" id="scene">
   <div class="shadow"></div>
   <div class="duo">
+    <div class="case"></div>
     <div class="half top"><div class="slab"></div><div class="glass"><iframe id="mirror" tabindex="-1" title="Top screen"></iframe></div><div class="glare"></div></div>
-    <div class="hinge"></div>
     <div class="half bot"><div class="slab"></div><div class="glass"><iframe id="game" title="Butterland"></iframe></div><div class="glare"></div><div class="edge"></div></div>
   </div>
 </div>
@@ -71,6 +75,12 @@ game.src=src;mirror.src=src;
 // Fit the shot to the window, with room around the device for the backdrop.
 function fit(){const k=Math.min(innerWidth/1000,innerHeight/960);document.getElementById("scene").style.setProperty("--k",k)}
 addEventListener("resize",fit);fit();
+
+// The game draws its own hinge strip (L / R and a dark bar) across the fold; hide it in both
+// copies, and paint the page behind the panels shell pink so their rounded corners blend in.
+for(const f of [game,mirror])f.addEventListener("load",()=>{
+  try{const st=f.contentDocument.createElement("style");st.textContent="#hinge{display:none!important}html,body,#stage,#ds{background:#efc9cb!important}";f.contentDocument.head.append(st)}catch(e){}
+});
 
 // The top screen shows the playable game's top canvas, drawn over a quiet copy of the page.
 let live=null,copy=null;
