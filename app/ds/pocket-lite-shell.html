@@ -240,7 +240,10 @@ canvas { display: block; width: calc(var(--u)*76); height: calc(var(--u)*57); im
 .ds.duo:not(.duo-row) .sys { align-self: flex-start; align-items: flex-start; gap: calc(var(--u)*4); padding-left: calc(var(--u)*3); }
 .ds.duo:not(.duo-row) .btn { width: calc(var(--u)*12.5); height: calc(var(--u)*12.5); font-size: calc(var(--u)*4.2); }
 .ds.duo:not(.duo-row) .small { flex-direction: row-reverse; gap: calc(var(--u)*2); font-size: calc(var(--u)*2.4); font-style: italic; padding: calc(var(--u)*.6) 0; }
-.ds.duo:not(.duo-row) .pill { width: calc(var(--u)*6); height: calc(var(--u)*6); background: radial-gradient(circle at 40% 30%, #ffffff, #f3eeef 55%, #dcd2d4); }
+.ds.duo:not(.duo-row) .pill { width: calc(var(--u)*6); height: calc(var(--u)*6); background: radial-gradient(circle at 40% 30%, #fff1f1 0%, #f6d6d6 30%, var(--btn) 62%, #dcaaab 100%); }
+/* breathing room: space to the left of Y, and above START */
+.ds.duo:not(.duo-row) .face { margin-left: calc(var(--u)*4); }
+.ds.duo:not(.duo-row) .sys { margin-top: calc(var(--u)*4); }
 .ds.duo:not(.duo-row) .stick-wrap, .ds.duo:not(.duo-row) .dpad-wrap, .ds.duo:not(.duo-row) .face { filter: drop-shadow(0 calc(var(--u)*1.2) calc(var(--u)*1)  rgba(90,32,42,.45)); }
 /* ---------- closed lid: what the folded phone's small outer screen shows ----------
    The back of a pink 3DS XL lid: plain glossy pink, a white hinge bar across the top with a small
