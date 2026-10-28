@@ -415,8 +415,7 @@
       y: 12.5,
       sheet: "/sprite-sheets/sashi-walk.png",
       behavior: "hide",
-      lines: ["\u2022Sashi looks up from Claire's letters.", "\u2022...Chirp. The handwriting is acceptable.", "\u2022She returns to her hiding place with great dignity."],
-      bolt: "\u2022Sashi no want pet, Sashi want big boobies."
+      lines: ["\u2022Sashi looks up from Claire's letters.", "\u2022...Chirp. The handwriting is acceptable.", "\u2022She returns to her hiding place with great dignity."]
     }
   ];
   var ENTRY = { x: 28, y: 31.6 };

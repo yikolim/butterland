@@ -197,8 +197,7 @@ export const CATS:CatDef[]=[
  {name:"Ollie",floor:2,x:30,y:16,sheet:"/sprite-sheets/ollie-walk.png",behavior:"hide",
   lines:["•Two eyes peer out from behind the furniture.","•Ollie has inspected this spot. It is a good spot.","•He found the basement. He is not coming back up."]},
  {name:"Sashi",floor:1,x:36,y:12.5,sheet:"/sprite-sheets/sashi-walk.png",behavior:"hide",
-  lines:["•Sashi looks up from Claire's letters.","•...Chirp. The handwriting is acceptable.","•She returns to her hiding place with great dignity."],
-  bolt:"•Sashi no want pet, Sashi want big boobies."}
+  lines:["•Sashi looks up from Claire's letters.","•...Chirp. The handwriting is acceptable.","•She returns to her hiding place with great dignity."]}
 ];
 
 // Where Claire stands after stepping through the front door.
