@@ -4,7 +4,7 @@
 // Any button or tap during the intro skips straight to the finished title.
 
 type G=CanvasRenderingContext2D;
-export type OpeningChoice="play"|"new"|"help"|null;
+export type OpeningChoice="play"|"new"|"help"|"ch1"|"ch2"|"ch3"|null;
 
 // The touch-screen backdrop shared by the title menu and the game: soft sky fading to green,
 // with a strip of grass and a few flowers along the bottom.
@@ -201,9 +201,13 @@ export function createOpening(o:{
 
  /* ---- bottom screen ---- */
  // With a saved game the menu is CONTINUE / NEW GAME / HOW TO PLAY, otherwise PLAY / HOW TO PLAY.
- const PLAIN=[{label:"PLAY",y:62,pick:"play"},{label:"HOW TO PLAY",y:104,pick:"help"}] as const;
- const SAVED=[{label:"CONTINUE",y:44,pick:"play"},{label:"NEW GAME",y:84,pick:"new"},{label:"HOW TO PLAY",y:124,pick:"help"}] as const;
- const buttons=()=>o.hasSave()?SAVED:PLAIN;
+ // CHAPTERS opens a second list that starts the game at each part of the story.
+ type Btn={label:string;y:number;pick:"play"|"new"|"help"|"chapters"|"back"|"ch1"|"ch2"|"ch3"};
+ const PLAIN:Btn[]=[{label:"PLAY",y:44,pick:"play"},{label:"CHAPTERS",y:84,pick:"chapters"},{label:"HOW TO PLAY",y:124,pick:"help"}];
+ const SAVED:Btn[]=[{label:"CONTINUE",y:26,pick:"play"},{label:"NEW GAME",y:64,pick:"new"},{label:"CHAPTERS",y:102,pick:"chapters"},{label:"HOW TO PLAY",y:140,pick:"help"}];
+ const CHAPTERS:Btn[]=[{label:"1. FIND THE CATS",y:26,pick:"ch1"},{label:"2. THE DELIVERY",y:64,pick:"ch2"},{label:"3. PHONE & TESLA",y:102,pick:"ch3"},{label:"BACK",y:140,pick:"back"}];
+ let inChapters=false;
+ const buttons=()=>inChapters?CHAPTERS:o.hasSave()?SAVED:PLAIN;
  const BX=48,BWIDTH=160,BHEIGHT=32;
  const woodButton=(g:G,x:number,y:number,w:number,h:number,label:string,on:boolean)=>{
   g.fillStyle="#2b1a0e";g.fillRect(x+2,y+3,w,h);                 // drop shadow
@@ -310,10 +314,11 @@ export function createOpening(o:{
   },
   drawTop,drawBottom,
   ready,
-  isHelp:()=>page>=0,
+  // true while a card or the chapter list is up (B steps back out of it)
+  isHelp:()=>page>=0||inChapters,
   skip:startSkip,
-  back:closeCard,
-  finish(){t=Math.max(t,99);jingled=true;page=-1;closing=false;flipClock=-1;skipPhase=0},
+  back(){if(page>=0)closeCard();else if(inChapters){inChapters=false;selected=2}},
+  finish(){t=Math.max(t,99);jingled=true;page=-1;closing=false;flipClock=-1;skipPhase=0;inChapters=false;selected=0},
   move(dir:-1|1){if(page<0){const n=buttons().length;selected=(selected+dir+n)%n}},
   // A / START: returns what to do.
   choose():OpeningChoice{
@@ -322,6 +327,9 @@ export function createOpening(o:{
    if(page>=0){advanceCard();return null}
    const pick=buttons()[Math.min(selected,buttons().length-1)].pick;
    if(pick==="help"){openCard();return "help"}
+   if(pick==="chapters"){inChapters=true;selected=0;return null}
+   if(pick==="back"){inChapters=false;selected=o.hasSave()?2:1;return null}
+   if(pick==="ch1"||pick==="ch2"||pick==="ch3")inChapters=false;
    return pick;
   },
   // Touch on the bottom screen.

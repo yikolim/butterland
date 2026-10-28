@@ -198,10 +198,11 @@ export function createMolarQuest(DS:DSApi){
  // The cat quest is given the first time Claire steps inside; until then the touch screen just
  // points her at the front door.
  let questGiven=false;
- const enterHouse=()=>fadeTo(()=>{
+ const goInside=()=>{
   scene="inside";floorIndex=0;claire.x=ENTRY.x;claire.y=ENTRY.y;claire.dir="up";snapCamera();say(FLOORS[0].name);
   if(!questGiven){questGiven=true;later(600,()=>openDialog("CLAIRE",["•Where are the cats?"],()=>openDialog("",["•Michael, Sashi, Ollie and Aggu are hiding somewhere in the house.","•New quest: find all four cats!"])))}
- });
+ };
+ const enterHouse=()=>fadeTo(goInside);
  const leaveHouse=()=>fadeTo(()=>{scene="outside";out.x=46;out.y=63.5;out.dir="down";out.frame=1;say("FRONT YARD")});
  let stairsLock=false,stairsReleased=true;
  const goFloor=(to:number,from:number)=>{stairsLock=true;stairsReleased=false;fadeTo(()=>{
@@ -224,9 +225,26 @@ export function createMolarQuest(DS:DSApi){
   foundCats.clear();for(const n of s.found)foundCats.add(n);
   questGiven=s.questGiven;countDone=s.countDone;delivery=s.delivery;out.x=s.x;out.y=s.y;out.dir="down";
  };
+ // Back to the very start of the story (new game, or before jumping to a chapter).
+ const resetProgress=()=>{
+  foundCats.clear();zoomed.clear();effects.length=0;cats.splice(0,cats.length,...makeCats());
+  countDone=false;questGiven=false;delivery="none";truckT=0;unboxT=0;truckHold=false;unboxHold=false;
+  notice=null;dlg=null;flightDue=false;floorIndex=0;claire.x=ENTRY.x;claire.y=ENTRY.y;
+  out.x=49.5;out.y=67;out.dir="down";out.frame=1;bgmDuck(false);
+ };
+ // Chapters: 1 the cat hunt (just inside the front door), 2 the delivery (all cats found, the truck
+ // on its way), 3 the iPhone Duo and the Tesla (opening the package in the yard).
+ const startChapter=(n:1|2|3)=>fadeTo(()=>{
+  resetProgress();
+  if(n===1){goInside();say("CHAPTER 1: FIND THE CATS",3);return}
+  questGiven=true;countDone=true;for(const c of cats)foundCats.add(c.name);
+  if(n===2){scene="inside";snapCamera();say("CHAPTER 2: THE DELIVERY",3);return}
+  scene="outside";out.x=PACKAGE_SPOT.x+2;out.y=PACKAGE_SPOT.y-2;delivery="unboxing";unboxT=0;say("CHAPTER 3: PHONE & TESLA",3);
+ });
+ const pickTitle=(c:string|null)=>{if(c==="play")startGame();else if(c==="new")startGame(true);else if(c==="ch1")startChapter(1);else if(c==="ch2")startChapter(2);else if(c==="ch3")startChapter(3)};
  const startGame=(fresh=false)=>fadeTo(()=>{
   const s=fresh?null:readSave();
-  if(fresh)try{localStorage.removeItem(SAVE_KEY)}catch{/* storage blocked */}
+  if(fresh){resetProgress();try{localStorage.removeItem(SAVE_KEY)}catch{/* storage blocked */}}
   if(s)loadSave(s);
   scene="outside";say(s?"WELCOME BACK!":"FRONT YARD",3);
  });
@@ -361,7 +379,7 @@ export function createMolarQuest(DS:DSApi){
 
  const interact=()=>{
   if(busy)return;
-  if(scene==="title"){const c=opening.choose();if(c==="play")startGame();else if(c==="new")startGame(true);return}
+  if(scene==="title"){pickTitle(opening.choose());return}
   if(dlg){advanceDialog();return}
   if(scene==="delivery"){truckT=Math.max(truckT,TRUCK.END);return}
   if(scene==="outside"){if(delivery==="unboxing")return;if(nearPackage())pickUpPackage();else if(nearCar())openPhone();else if(nearDoor())enterHouse();return}
@@ -695,7 +713,7 @@ export function createMolarQuest(DS:DSApi){
     if(t.phase!=="start"||phoneOpen)return;
     if(bgm.paused&&soundOn&&!inSound(t))syncMusic();
     if(inSound(t)){setSound(!soundOn);return}
-    if(scene==="title"){if(busy)return;const c=opening.touch(t.x,t.y);if(c==="play")startGame();else if(c==="new")startGame(true)}
+    if(scene==="title"){if(busy)return;pickTitle(opening.touch(t.x,t.y))}
     else if(t.x>=DIALOG.x&&t.x<=DIALOG.x+DIALOG.w&&t.y>=DIALOG.y&&t.y<=DIALOG.y+DIALOG.h){
      if(asking())dlg!.ask!.sel=t.x<DIALOG.x+DIALOG.w/2?0:1;   // tap YES or NO
      interact();
