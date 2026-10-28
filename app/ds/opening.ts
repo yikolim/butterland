@@ -201,11 +201,11 @@ export function createOpening(o:{
 
  /* ---- bottom screen ---- */
  // With a saved game the menu is CONTINUE / NEW GAME / HOW TO PLAY, otherwise PLAY / HOW TO PLAY.
- // CHAPTERS opens a second list that starts the game at each part of the story.
+ // CHAPTERS opens a second list that starts the game at each part of the story (numbers only, no spoilers).
  type Btn={label:string;y:number;pick:"play"|"new"|"help"|"chapters"|"back"|"ch1"|"ch2"|"ch3"};
  const PLAIN:Btn[]=[{label:"PLAY",y:44,pick:"play"},{label:"CHAPTERS",y:84,pick:"chapters"},{label:"HOW TO PLAY",y:124,pick:"help"}];
  const SAVED:Btn[]=[{label:"CONTINUE",y:26,pick:"play"},{label:"NEW GAME",y:64,pick:"new"},{label:"CHAPTERS",y:102,pick:"chapters"},{label:"HOW TO PLAY",y:140,pick:"help"}];
- const CHAPTERS:Btn[]=[{label:"1. FIND THE CATS",y:26,pick:"ch1"},{label:"2. THE DELIVERY",y:64,pick:"ch2"},{label:"3. PHONE & TESLA",y:102,pick:"ch3"},{label:"BACK",y:140,pick:"back"}];
+ const CHAPTERS:Btn[]=[{label:"CHAPTER 1",y:26,pick:"ch1"},{label:"CHAPTER 2",y:64,pick:"ch2"},{label:"CHAPTER 3",y:102,pick:"ch3"},{label:"BACK",y:140,pick:"back"}];
  let inChapters=false;
  const buttons=()=>inChapters?CHAPTERS:o.hasSave()?SAVED:PLAIN;
  const BX=48,BWIDTH=160,BHEIGHT=32;

@@ -1944,7 +1944,7 @@
     }
     const PLAIN = [{ label: "PLAY", y: 44, pick: "play" }, { label: "CHAPTERS", y: 84, pick: "chapters" }, { label: "HOW TO PLAY", y: 124, pick: "help" }];
     const SAVED = [{ label: "CONTINUE", y: 26, pick: "play" }, { label: "NEW GAME", y: 64, pick: "new" }, { label: "CHAPTERS", y: 102, pick: "chapters" }, { label: "HOW TO PLAY", y: 140, pick: "help" }];
-    const CHAPTERS = [{ label: "1. FIND THE CATS", y: 26, pick: "ch1" }, { label: "2. THE DELIVERY", y: 64, pick: "ch2" }, { label: "3. PHONE & TESLA", y: 102, pick: "ch3" }, { label: "BACK", y: 140, pick: "back" }];
+    const CHAPTERS = [{ label: "CHAPTER 1", y: 26, pick: "ch1" }, { label: "CHAPTER 2", y: 64, pick: "ch2" }, { label: "CHAPTER 3", y: 102, pick: "ch3" }, { label: "BACK", y: 140, pick: "back" }];
     let inChapters = false;
     const buttons = () => inChapters ? CHAPTERS : o.hasSave() ? SAVED : PLAIN;
     const BX = 48, BWIDTH = 160, BHEIGHT = 32;
@@ -2886,7 +2886,7 @@
       resetProgress();
       if (n === 1) {
         goInside();
-        say("CHAPTER 1: FIND THE CATS", 3);
+        say("CHAPTER 1", 3);
         return;
       }
       questGiven = true;
@@ -2895,7 +2895,7 @@
       if (n === 2) {
         scene = "inside";
         snapCamera();
-        say("CHAPTER 2: THE DELIVERY", 3);
+        say("CHAPTER 2", 3);
         return;
       }
       scene = "outside";
@@ -2903,7 +2903,7 @@
       out.y = PACKAGE_SPOT.y - 2;
       delivery = "unboxing";
       unboxT = 0;
-      say("CHAPTER 3: PHONE & TESLA", 3);
+      say("CHAPTER 3", 3);
     });
     const pickTitle = (c) => {
       if (c === "play") startGame();

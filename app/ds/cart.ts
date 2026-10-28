@@ -236,10 +236,10 @@ export function createMolarQuest(DS:DSApi){
  // on its way), 3 the iPhone Duo and the Tesla (opening the package in the yard).
  const startChapter=(n:1|2|3)=>fadeTo(()=>{
   resetProgress();
-  if(n===1){goInside();say("CHAPTER 1: FIND THE CATS",3);return}
+  if(n===1){goInside();say("CHAPTER 1",3);return}
   questGiven=true;countDone=true;for(const c of cats)foundCats.add(c.name);
-  if(n===2){scene="inside";snapCamera();say("CHAPTER 2: THE DELIVERY",3);return}
-  scene="outside";out.x=PACKAGE_SPOT.x+2;out.y=PACKAGE_SPOT.y-2;delivery="unboxing";unboxT=0;say("CHAPTER 3: PHONE & TESLA",3);
+  if(n===2){scene="inside";snapCamera();say("CHAPTER 2",3);return}
+  scene="outside";out.x=PACKAGE_SPOT.x+2;out.y=PACKAGE_SPOT.y-2;delivery="unboxing";unboxT=0;say("CHAPTER 3",3);
  });
  const pickTitle=(c:string|null)=>{if(c==="play")startGame();else if(c==="new")startGame(true);else if(c==="ch1")startChapter(1);else if(c==="ch2")startChapter(2);else if(c==="ch3")startChapter(3)};
  const startGame=(fresh=false)=>fadeTo(()=>{
