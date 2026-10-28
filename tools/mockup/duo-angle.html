@@ -31,9 +31,6 @@ body{background:#d2d6de;overflow:hidden;font-family:-apple-system,"SF Pro Displa
 .half{position:absolute;left:0;width:var(--W);height:var(--H);transform-style:preserve-3d}
 .half.top{bottom:0;transform-origin:50% 100%;transform:rotateX(var(--lean,0deg))}
 .half.bot{top:0;transform-origin:50% 0;transform:rotateX(var(--open))}
-/* the iPhone Duo's own case: a pale frosted shell, only a shade off the backdrop */
-.case{position:absolute;inset:-18px;border-radius:48px;background:rgba(255,255,255,.2);
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.38),inset 0 2px 0 rgba(255,255,255,.3),0 1px 2px rgba(60,80,120,.08)}
 .slab{position:absolute;inset:-4px;border-radius:35px;
   background:linear-gradient(180deg,#eccfd0,#dcbcbe 50%,#cfb0b3);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.55)}
@@ -48,8 +45,8 @@ body{background:#d2d6de;overflow:hidden;font-family:-apple-system,"SF Pro Displa
 /* thickness: the near edge of the bottom half and the hinge barrel */
 .edge{position:absolute;left:-4px;right:-4px;bottom:-4px;height:12px;transform-origin:50% 100%;
   transform:rotateX(-90deg);border-radius:0 0 12px 12px;background:linear-gradient(90deg,#b99c9f,#d6b9bb 20%,#c8aaad 50%,#d6b9bb 80%,#b99c9f)}
-.hinge{position:absolute;left:-18px;right:-18px;top:-9px;height:18px;transform:translateZ(-1px);
-  background:linear-gradient(rgba(255,255,255,.12),rgba(120,140,170,.14) 50%,rgba(255,255,255,.12))}
+.hinge{position:absolute;left:28px;right:28px;top:-9px;height:18px;border-radius:9px;transform:translateZ(-6px);
+  background:linear-gradient(#dcc0c2,#bfa2a5 55%,#a88d90)}
 .shadow{position:absolute;left:-60px;right:-60px;top:calc(var(--H) * .78);height:90px;border-radius:50%;
   background:radial-gradient(closest-side,rgba(60,70,110,.30),rgba(60,70,110,.10) 60%,transparent);filter:blur(10px);
   transform:translateY(40px)}
@@ -60,9 +57,9 @@ body{background:#d2d6de;overflow:hidden;font-family:-apple-system,"SF Pro Displa
 <div class="scene" id="scene">
   <div class="shadow"></div>
   <div class="duo">
-    <div class="half top"><div class="case"></div><div class="slab"></div><div class="glass"><iframe id="mirror" tabindex="-1" title="Top screen"></iframe></div><div class="glare"></div></div>
+    <div class="half top"><div class="slab"></div><div class="glass"><iframe id="mirror" tabindex="-1" title="Top screen"></iframe></div><div class="glare"></div></div>
     <div class="hinge"></div>
-    <div class="half bot"><div class="case"></div><div class="slab"></div><div class="glass"><iframe id="game" title="Butterland"></iframe></div><div class="glare"></div><div class="edge"></div></div>
+    <div class="half bot"><div class="slab"></div><div class="glass"><iframe id="game" title="Butterland"></iframe></div><div class="glare"></div><div class="edge"></div></div>
   </div>
 </div>
 <script>
@@ -100,9 +97,9 @@ function loop(){
 requestAnimationFrame(loop);
 game.addEventListener("load",()=>game.focus());
 
-// Demo: pressing PLAY on the title runs the delivery story without the cat hunt. Claire is in the
-// house with every cat found, hears the truck, the delivery cutscene plays, then she steps
-// out, walks down to the package by the gate, opens it and unboxes the iPhone Duo.
+// Demo: pressing PLAY on the title runs the delivery story without the cat hunt. It opens on the
+// truck cutscene (every cat already found), then Claire steps out of the house, walks down to
+// the package by the gate, opens it and unboxes the iPhone Duo.
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const cart=()=>game.contentWindow&&game.contentWindow.__cart;
 const state=()=>cart().state();
@@ -110,11 +107,7 @@ function key(code,type){const w=game.contentWindow;w.dispatchEvent(new w.Keyboar
 async function tap(code){key(code,"keydown");await sleep(90);key(code,"keyup")}
 async function until(test,ms){const end=Date.now()+ms;while(Date.now()<end){if(test())return true;await sleep(100)}return false}
 async function demo(){
-  await sleep(900);                                     // let PLAY's fade finish
-  cart().chapter(2);                                    // inside, all four cats found
-  // Read the truck rumble lines (A), until the cutscene starts.
-  const end=Date.now()+20000;
-  while(state().scene!=="delivery"&&Date.now()<end){if(state().dlg)await tap("KeyX");await sleep(1300)}
+  cart().truck();
   await until(()=>state().scene==="inside"&&state().delivery==="waiting",30000);   // the cutscene ends
   await sleep(2600);                                    // NEW PACKAGE! notice
   cart().leave();
@@ -130,7 +123,7 @@ let last=null,ran=false;
 setInterval(()=>{
   let s;try{s=cart()&&state()}catch(e){return}
   if(!s)return;
-  if(!ran&&last==="title"&&s.scene==="outside"&&s.delivery!=="unboxing"){ran=true;demo()}
+  if(!ran&&last==="title"&&s.scene==="outside"&&s.delivery!=="unboxing"){ran=true;demo()}   // PLAY lands in the yard
   last=s.scene;
 },150);
 </script>

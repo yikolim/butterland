@@ -356,7 +356,7 @@ export function createMolarQuest(DS:DSApi){
  };
  const endCutscene=()=>{
   deliverySfx.engine(0);
-  fadeTo(()=>{scene="inside";delivery="waiting";notice={title:"NEW PACKAGE!",lines:["Claire got a new package!","What is it?"],t:0};deliverySfx.notify()});
+  fadeTo(()=>{scene="inside";delivery="waiting";claire.dir="down";claire.frame=1;notice={title:"NEW PACKAGE!",lines:["Claire got a new package!","What is it?"],t:0};deliverySfx.notify()});
  };
 
  /* what is Claire facing inside? */
@@ -488,9 +488,9 @@ export function createMolarQuest(DS:DSApi){
   if(showPkg&&py<=wy-cy)pkg(g,px,py);
   // Unboxing: the box sits at Claire's side, shakes, opens, and the phone rises out of it.
   const u=unboxT,unboxing=delivery==="unboxing",bx=wx-cx+14,by=wy-cy+1;
-  // Claire's happy dance: spin through the four directions with little hops.
+  // Claire's happy dance: little hops, facing the camera the whole time.
   const dancing=unboxing&&u>=UNBOX.DANCE_START&&u<UNBOX.DANCE_END;
-  const dir=dancing?(["down","left","up","right"] as const)[Math.floor((u-UNBOX.DANCE_START)*5)%4]:out.dir;
+  const dir=dancing?"down":out.dir;
   const hop=dancing?-Math.round(Math.abs(Math.sin((u-UNBOX.DANCE_START)*10))*5):0;
   g.fillStyle="rgba(21,72,46,.45)";g.fillRect(sx+OUT_CELL*.3,sy+OUT_CELL*.82,OUT_CELL*.4,3);
   sprite(g,claireOut,OUT_CELL,dancing?1:out.frame,directionRow[dir],sx,sy+hop);
@@ -684,6 +684,7 @@ export function createMolarQuest(DS:DSApi){
    unbox(at=0,hold=false){scene="outside";delivery="unboxing";unboxT=at;unboxHold=hold;dlg=null;countDone=true;questGiven=true},
    replay(at=0,hold=false){scene="delivery";delivery="cutscene";truckT=at;dlg=null;truckHold=hold},
    chapter(n:1|2|3){startChapter(n)},
+   truck(){fadeTo(()=>{resetProgress();questGiven=true;countDone=true;for(const c of cats)foundCats.add(c.name);scene="delivery";delivery="cutscene";truckT=0})},
    leave(){leaveHouse()}
   };
  }

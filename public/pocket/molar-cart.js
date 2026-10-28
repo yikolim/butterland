@@ -3085,6 +3085,8 @@
       fadeTo(() => {
         scene = "inside";
         delivery = "waiting";
+        claire.dir = "down";
+        claire.frame = 1;
         notice = { title: "NEW PACKAGE!", lines: ["Claire got a new package!", "What is it?"], t: 0 };
         deliverySfx.notify();
       });
@@ -3286,7 +3288,7 @@
       if (showPkg && py <= wy - cy) pkg(g, px, py);
       const u = unboxT, unboxing = delivery === "unboxing", bx = wx - cx + 14, by = wy - cy + 1;
       const dancing = unboxing && u >= UNBOX.DANCE_START && u < UNBOX.DANCE_END;
-      const dir = dancing ? ["down", "left", "up", "right"][Math.floor((u - UNBOX.DANCE_START) * 5) % 4] : out.dir;
+      const dir = dancing ? "down" : out.dir;
       const hop = dancing ? -Math.round(Math.abs(Math.sin((u - UNBOX.DANCE_START) * 10)) * 5) : 0;
       g.fillStyle = "rgba(21,72,46,.45)";
       g.fillRect(sx + OUT_CELL * 0.3, sy + OUT_CELL * 0.82, OUT_CELL * 0.4, 3);
@@ -3566,6 +3568,17 @@
         },
         chapter(n) {
           startChapter(n);
+        },
+        truck() {
+          fadeTo(() => {
+            resetProgress();
+            questGiven = true;
+            countDone = true;
+            for (const c of cats) foundCats.add(c.name);
+            scene = "delivery";
+            delivery = "cutscene";
+            truckT = 0;
+          });
         },
         leave() {
           leaveHouse();
