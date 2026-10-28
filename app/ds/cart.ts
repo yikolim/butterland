@@ -682,7 +682,9 @@ export function createMolarQuest(DS:DSApi){
    outside(x:number,y:number){scene="outside";out.x=x;out.y=y},
    pkgReady(){scene="outside";delivery="waiting";countDone=true;questGiven=true;for(const c of cats)foundCats.add(c.name);out.x=46;out.y=84;dlg=null},
    unbox(at=0,hold=false){scene="outside";delivery="unboxing";unboxT=at;unboxHold=hold;dlg=null;countDone=true;questGiven=true},
-   replay(at=0,hold=false){scene="delivery";delivery="cutscene";truckT=at;dlg=null;truckHold=hold}
+   replay(at=0,hold=false){scene="delivery";delivery="cutscene";truckT=at;dlg=null;truckHold=hold},
+   chapter(n:1|2|3){startChapter(n)},
+   leave(){leaveHouse()}
   };
  }
 

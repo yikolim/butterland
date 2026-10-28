@@ -3563,6 +3563,12 @@
           truckT = at;
           dlg = null;
           truckHold = hold;
+        },
+        chapter(n) {
+          startChapter(n);
+        },
+        leave() {
+          leaveHouse();
         }
       };
     }
