@@ -108,16 +108,19 @@ canvas { display: block; width: calc(var(--u)*76); height: calc(var(--u)*57); im
 .ds:not(.wide) .deck .bezel { margin-bottom: calc(var(--u)*4); }
 .ds.wide .deck { grid-template-columns: 1fr auto 1fr; grid-template-areas: "dpad screen face" ". screen sys"; column-gap: calc(var(--u)*4); }
 .deck .bezel { grid-area: screen; }
+.righty { display: contents; }
+.home, .nub { display: none; }
 .lefty { grid-area: dpad; display: flex; flex-direction: column; align-items: center; gap: calc(var(--u)*2.5); }
 /* 3DS-style circle pad (shown in the Duo layout): drag the knob to walk, like the D-pad. */
 .stick-wrap { display: none; position: relative; }
 .stick { width: 100%; height: 100%; border-radius: 50%; position: relative; touch-action: none;
-  background: radial-gradient(circle at 50% 45%, #c48f93 0 58%, #a87176 72%, #d9a8ab 100%);
-  box-shadow: inset 0 calc(var(--u)*.8) calc(var(--u)*1.2) rgba(80,30,38,.55), 0 calc(var(--u)*.4) 0 rgba(255,255,255,.6); }
-.knob { position: absolute; left: 50%; top: 50%; width: 64%; height: 64%; margin: -32% 0 0 -32%; border-radius: 50%; transition: transform .08s ease-out;
-  background: radial-gradient(circle at 42% 35%, #fff4f4 0%, #f6dcdc 30%, var(--btn) 62%, #d6a2a5 100%);
-  box-shadow: 0 calc(var(--u)*.9) calc(var(--u)*1) rgba(80,30,38,.45), inset 0 calc(var(--u)*-.6) calc(var(--u)*.8) rgba(150,90,95,.4), inset 0 0 0 calc(var(--u)*1.6) rgba(255,255,255,.18); }
-.knob::after { content: ""; position: absolute; inset: 24%; border-radius: 50%; background: radial-gradient(circle, rgba(160,100,106,.18) 0 40%, transparent 41%), repeating-radial-gradient(circle, rgba(150,90,96,.16) 0 1px, transparent 1px 3px); }
+  background: radial-gradient(circle at 50% 45%, #f1d3d5 0 60%, #e9c2c5 100%);
+  box-shadow: 0 0 0 calc(var(--u)*.6) rgba(255,255,255,.95), 0 0 0 calc(var(--u)*1.1) rgba(205,150,156,.5), inset 0 calc(var(--u)*.6) calc(var(--u)*1) rgba(140,80,90,.3); }
+.knob { position: absolute; left: 50%; top: 50%; width: 78%; height: 78%; margin: -39% 0 0 -39%; border-radius: 50%; transition: transform .08s ease-out;
+  background: radial-gradient(circle at 50% 38%, #ffffff 0%, #f6f1f2 45%, #e4dadc 100%);
+  box-shadow: 0 calc(var(--u)*.6) calc(var(--u)*.9) rgba(90,45,55,.3), inset 0 calc(var(--u)*-.5) calc(var(--u)*.6) rgba(160,130,136,.35); }
+.knob::after { content: ""; position: absolute; inset: 16%; border-radius: 50%; background: radial-gradient(circle at 50% 60%, #f8f4f5, #ebe3e5 70%);
+  box-shadow: inset 0 calc(var(--u)*.5) calc(var(--u)*.7) rgba(140,110,116,.35), 0 calc(var(--u)*.2) 0 rgba(255,255,255,.9); }
 .stick.dragging .knob { transition: none; }
 .face { grid-area: face; }
 /* DS Lite: START above SELECT, small round keys under the face buttons, labels printed to their left */
@@ -242,15 +245,24 @@ canvas { display: block; width: calc(var(--u)*76); height: calc(var(--u)*57); im
 .ds.duo:not(.duo-row) .glass { background: #121013; border-radius: calc(var(--u)*2); padding: calc(var(--u)*1.6); box-shadow: inset 0 calc(var(--u)*.7) calc(var(--u)*1.2) rgba(0,0,0,.85), inset 0 calc(var(--u)*-.3) 0 rgba(255,255,255,.12); }
 .ds.duo:not(.duo-row) canvas { border-radius: calc(var(--u)*.6); }
 /* Thumb-sized controls: the touch screen gives up a little width so the D-pad and buttons can grow. */
-.ds.duo:not(.duo-row) .face { width: calc(var(--u)*42); height: calc(var(--u)*42); }
+.ds.duo:not(.duo-row) .face { width: calc(var(--u)*36); height: calc(var(--u)*36); }
 /* left column: circle pad on top, D-pad under it (as on a 3DS); START and SELECT spaced apart */
-.ds.duo:not(.duo-row) .deck { grid-template-areas: "dpad screen face" "dpad screen sys"; }
+/* Bottom half laid out like the New 2DS XL: circle pad, D-pad and Home down the left; a small nub,
+   the face buttons and START / SELECT (dot first, italic label after) down the right. */
+.ds.duo:not(.duo-row) .deck { grid-template-areas: "dpad screen face"; grid-template-columns: 1fr auto 1fr; align-items: stretch; }
+.ds.duo:not(.duo-row) .lefty { justify-content: space-between; align-self: stretch; gap: calc(var(--u)*2); }
+.ds.duo:not(.duo-row) .righty { grid-area: face; display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: calc(var(--u)*2); align-self: stretch; }
 .ds.duo:not(.duo-row) .stick-wrap { display: block; width: calc(var(--u)*28); height: calc(var(--u)*28); }
-.ds.duo:not(.duo-row) .dpad-wrap { width: calc(var(--u)*34); height: calc(var(--u)*34); }
-.ds.duo:not(.duo-row) .sys { gap: calc(var(--u)*5); }
-.ds.duo:not(.duo-row) .btn { width: calc(var(--u)*15); height: calc(var(--u)*15); font-size: calc(var(--u)*5); }
-.ds.duo:not(.duo-row) .pill { width: calc(var(--u)*7.5); height: calc(var(--u)*7.5); }
-.ds.duo:not(.duo-row) .small { font-size: calc(var(--u)*2.4); padding: calc(var(--u)*1) 0; }
+.ds.duo:not(.duo-row) .dpad-wrap { width: calc(var(--u)*30); height: calc(var(--u)*30); }
+.ds.duo:not(.duo-row) .home { display: grid; place-items: center; align-self: flex-start; margin-left: calc(var(--u)*2); width: calc(var(--u)*6); height: calc(var(--u)*6); border-radius: 50%; color: #c79aa0;
+  background: radial-gradient(circle at 45% 35%, #fff5f5, #f1d6d8 60%, #e2bcc0); box-shadow: 0 0 0 calc(var(--u)*.4) rgba(255,255,255,.9), 0 calc(var(--u)*.4) calc(var(--u)*.5) rgba(90,40,50,.3); }
+.ds.duo:not(.duo-row) .home svg { width: 60%; height: 60%; }
+.ds.duo:not(.duo-row) .nub { display: block; align-self: flex-start; margin-left: calc(var(--u)*3); width: calc(var(--u)*7); height: calc(var(--u)*7); border-radius: 50%;
+  background: radial-gradient(circle at 45% 35%, #f7f3f4, #ddd4d6 60%, #c5babd); box-shadow: 0 0 0 calc(var(--u)*.5) rgba(255,255,255,.85), 0 calc(var(--u)*.5) calc(var(--u)*.6) rgba(80,40,48,.35); }
+.ds.duo:not(.duo-row) .sys { align-self: flex-start; align-items: flex-start; gap: calc(var(--u)*4); padding-left: calc(var(--u)*3); }
+.ds.duo:not(.duo-row) .btn { width: calc(var(--u)*12.5); height: calc(var(--u)*12.5); font-size: calc(var(--u)*4.2); }
+.ds.duo:not(.duo-row) .small { flex-direction: row-reverse; gap: calc(var(--u)*2); font-size: calc(var(--u)*2.4); font-style: italic; padding: calc(var(--u)*.6) 0; }
+.ds.duo:not(.duo-row) .pill { width: calc(var(--u)*6); height: calc(var(--u)*6); background: radial-gradient(circle at 40% 30%, #ffffff, #f3eeef 55%, #dcd2d4); }
 .ds.duo:not(.duo-row) .stick-wrap, .ds.duo:not(.duo-row) .dpad-wrap, .ds.duo:not(.duo-row) .face { filter: drop-shadow(0 calc(var(--u)*1.2) calc(var(--u)*1)  rgba(90,32,42,.45)); }
 /* ---------- closed lid: what the folded phone's small outer screen shows ----------
    The back of a pink 3DS XL lid: plain glossy pink, a white hinge bar across the top with a small
@@ -309,7 +321,10 @@ canvas { display: block; width: calc(var(--u)*76); height: calc(var(--u)*57); im
             <span class="arrow up"></span><span class="arrow down"></span><span class="arrow left"></span><span class="arrow right"></span><span class="dot"></span>
           </div>
         </div>
+        <div class="home" aria-hidden="true"><svg viewBox="0 0 10 10"><path d="M5 1.6 1.4 4.6h1.1v3.8h2V6.2h1v2.2h2V4.6h1.1z" fill="currentColor"/></svg></div>
         </div>
+        <div class="righty">
+        <div class="nub" aria-hidden="true"></div>
         <div class="face" role="group" aria-label="Face buttons">
           <div class="btn" data-btn="X">X</div>
           <div class="btn" data-btn="Y">Y</div>
@@ -319,6 +334,7 @@ canvas { display: block; width: calc(var(--u)*76); height: calc(var(--u)*57); im
         <div class="sys">
           <div class="small" data-btn="START">START<span class="pill"></span></div>
           <div class="small" data-btn="SELECT">SELECT<span class="pill"></span></div>
+        </div>
         </div>
       </div>
       </div>
