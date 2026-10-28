@@ -96,12 +96,14 @@ canvas { display: block; width: calc(var(--u)*76); height: calc(var(--u)*57); im
 .lefty { grid-area: dpad; display: flex; flex-direction: column; align-items: center; gap: calc(var(--u)*2.5); }
 /* 3DS-style circle pad (shown in the Duo layout): drag the knob to walk, like the D-pad. */
 .stick-wrap { display: none; position: relative; }
-.stick { width: 100%; height: 100%; border-radius: 50%; position: relative; touch-action: none; }
-.knob { position: absolute; left: 50%; top: 50%; width: 92%; height: 92%; margin: -46% 0 0 -46%; border-radius: 50%; transition: transform .08s ease-out;
-  background: radial-gradient(circle at 50% 38%, #ffffff 0%, #f6f1f2 45%, #e4dadc 100%);
-  box-shadow: 0 calc(var(--u)*.6) calc(var(--u)*.9) rgba(90,45,55,.3), inset 0 calc(var(--u)*-.5) calc(var(--u)*.6) rgba(160,130,136,.35); }
-.knob::after { content: ""; position: absolute; inset: 16%; border-radius: 50%; background: radial-gradient(circle at 50% 60%, #f8f4f5, #ebe3e5 70%);
-  box-shadow: inset 0 calc(var(--u)*.5) calc(var(--u)*.7) rgba(140,110,116,.35), 0 calc(var(--u)*.2) 0 rgba(255,255,255,.9); }
+.stick { width: 100%; height: 100%; border-radius: 50%; position: relative; touch-action: none;
+  box-shadow: 0 0 0 calc(var(--u)*.5) rgba(255,255,255,.85), 0 0 0 calc(var(--u)*.9) rgba(196,140,146,.45); }
+/* a pink cap, the same pink as the buttons, sitting in the thin ring */
+.knob { position: absolute; left: 50%; top: 50%; width: 84%; height: 84%; margin: -42% 0 0 -42%; border-radius: 50%; transition: transform .08s ease-out;
+  background: radial-gradient(circle at 42% 35%, #fff1f1 0%, #f6d6d6 30%, var(--btn) 62%, #dcaaab 100%);
+  box-shadow: 0 calc(var(--u)*.6) calc(var(--u)*.8) rgba(90,40,48,.32), inset 0 calc(var(--u)*-.5) calc(var(--u)*.6) rgba(150,90,95,.35); }
+.knob::after { content: ""; position: absolute; inset: 22%; border-radius: 50%; background: radial-gradient(circle at 50% 60%, rgba(255,255,255,.35), rgba(220,160,165,.25) 70%);
+  box-shadow: inset 0 calc(var(--u)*.4) calc(var(--u)*.6) rgba(150,90,96,.3); }
 .stick.dragging .knob { transition: none; }
 .face { grid-area: face; }
 /* DS Lite: START above SELECT, small round keys under the face buttons, labels printed to their left */
@@ -233,8 +235,8 @@ canvas { display: block; width: calc(var(--u)*76); height: calc(var(--u)*57); im
 .ds.duo:not(.duo-row) .deck { grid-template-areas: "dpad screen face"; grid-template-columns: 1fr auto 1fr; align-items: stretch; }
 .ds.duo:not(.duo-row) .lefty { justify-content: space-between; align-self: stretch; gap: calc(var(--u)*2); }
 .ds.duo:not(.duo-row) .righty { grid-area: face; display: flex; flex-direction: column; align-items: center; justify-content: space-around; gap: calc(var(--u)*2); align-self: stretch; }
-.ds.duo:not(.duo-row) .stick-wrap { display: block; width: calc(var(--u)*28); height: calc(var(--u)*28); }
-.ds.duo:not(.duo-row) .dpad-wrap { width: calc(var(--u)*30); height: calc(var(--u)*30); }
+.ds.duo:not(.duo-row) .stick-wrap { display: block; width: calc(var(--u)*22); height: calc(var(--u)*22); margin-top: calc(var(--u)*1); }
+.ds.duo:not(.duo-row) .dpad-wrap { width: calc(var(--u)*28); height: calc(var(--u)*28); }
 .ds.duo:not(.duo-row) .sys { align-self: flex-start; align-items: flex-start; gap: calc(var(--u)*4); padding-left: calc(var(--u)*3); }
 .ds.duo:not(.duo-row) .btn { width: calc(var(--u)*12.5); height: calc(var(--u)*12.5); font-size: calc(var(--u)*4.2); }
 .ds.duo:not(.duo-row) .small { flex-direction: row-reverse; gap: calc(var(--u)*2); font-size: calc(var(--u)*2.4); font-style: italic; padding: calc(var(--u)*.6) 0; }
@@ -497,7 +499,7 @@ canvas { display: block; width: calc(var(--u)*76); height: calc(var(--u)*57); im
     let dx = (x - (r.left + R)) / R, dy = (y - (r.top + R)) / R;
     const d = Math.hypot(dx, dy);
     if (d > 1) { dx /= d; dy /= d; }
-    knobEl.style.transform = `translate(${dx * 34}%, ${dy * 34}%)`;
+    knobEl.style.transform = `translate(${dx * 14}%, ${dy * 14}%)`;   // stays inside the thin ring
     if (d < 0.3) return [];
     const out = [], ang = Math.atan2(dy, dx) * 180 / Math.PI;
     if (ang > -67.5 && ang < 67.5) out.push("RIGHT");
