@@ -1942,9 +1942,11 @@
         o.jingle();
       }
     }
-    const PLAIN = [{ label: "PLAY", y: 62, pick: "play" }, { label: "HOW TO PLAY", y: 104, pick: "help" }];
-    const SAVED = [{ label: "CONTINUE", y: 44, pick: "play" }, { label: "NEW GAME", y: 84, pick: "new" }, { label: "HOW TO PLAY", y: 124, pick: "help" }];
-    const buttons = () => o.hasSave() ? SAVED : PLAIN;
+    const PLAIN = [{ label: "PLAY", y: 44, pick: "play" }, { label: "CHAPTERS", y: 84, pick: "chapters" }, { label: "HOW TO PLAY", y: 124, pick: "help" }];
+    const SAVED = [{ label: "CONTINUE", y: 26, pick: "play" }, { label: "NEW GAME", y: 64, pick: "new" }, { label: "CHAPTERS", y: 102, pick: "chapters" }, { label: "HOW TO PLAY", y: 140, pick: "help" }];
+    const CHAPTERS = [{ label: "CHAPTER 1", y: 26, pick: "ch1" }, { label: "CHAPTER 2", y: 64, pick: "ch2" }, { label: "CHAPTER 3", y: 102, pick: "ch3" }, { label: "BACK", y: 140, pick: "back" }];
+    let inChapters = false;
+    const buttons = () => inChapters ? CHAPTERS : o.hasSave() ? SAVED : PLAIN;
     const BX = 48, BWIDTH = 160, BHEIGHT = 32;
     const woodButton = (g, x, y, w, h, label, on) => {
       g.fillStyle = "#2b1a0e";
@@ -2124,9 +2126,16 @@
       drawTop,
       drawBottom,
       ready,
-      isHelp: () => page >= 0,
+      // true while a card or the chapter list is up (B steps back out of it)
+      isHelp: () => page >= 0 || inChapters,
       skip: startSkip,
-      back: closeCard,
+      back() {
+        if (page >= 0) closeCard();
+        else if (inChapters) {
+          inChapters = false;
+          selected = 2;
+        }
+      },
       finish() {
         t = Math.max(t, 99);
         jingled = true;
@@ -2134,6 +2143,8 @@
         closing = false;
         flipClock = -1;
         skipPhase = 0;
+        inChapters = false;
+        selected = 0;
       },
       move(dir) {
         if (page < 0) {
@@ -2157,6 +2168,17 @@
           openCard();
           return "help";
         }
+        if (pick === "chapters") {
+          inChapters = true;
+          selected = 0;
+          return null;
+        }
+        if (pick === "back") {
+          inChapters = false;
+          selected = o.hasSave() ? 2 : 1;
+          return null;
+        }
+        if (pick === "ch1" || pick === "ch2" || pick === "ch3") inChapters = false;
         return pick;
       },
       // Touch on the bottom screen.
@@ -2769,7 +2791,7 @@
       });
     };
     let questGiven = false;
-    const enterHouse = () => fadeTo(() => {
+    const goInside = () => {
       scene = "inside";
       floorIndex = 0;
       claire.x = ENTRY.x;
@@ -2781,7 +2803,8 @@
         questGiven = true;
         later(600, () => openDialog("CLAIRE", ["\u2022Where are the cats?"], () => openDialog("", ["\u2022Michael, Sashi, Ollie and Aggu are hiding somewhere in the house.", "\u2022New quest: find all four cats!"])));
       }
-    });
+    };
+    const enterHouse = () => fadeTo(goInside);
     const leaveHouse = () => fadeTo(() => {
       scene = "outside";
       out.x = 46;
@@ -2835,11 +2858,68 @@
       out.y = s.y;
       out.dir = "down";
     };
+    const resetProgress = () => {
+      foundCats.clear();
+      zoomed.clear();
+      effects.length = 0;
+      cats.splice(0, cats.length, ...makeCats());
+      countDone = false;
+      questGiven = false;
+      delivery = "none";
+      truckT = 0;
+      unboxT = 0;
+      truckHold = false;
+      unboxHold = false;
+      notice = null;
+      dlg = null;
+      flightDue = false;
+      floorIndex = 0;
+      claire.x = ENTRY.x;
+      claire.y = ENTRY.y;
+      out.x = 49.5;
+      out.y = 67;
+      out.dir = "down";
+      out.frame = 1;
+      bgmDuck(false);
+    };
+    const startChapter = (n) => fadeTo(() => {
+      resetProgress();
+      if (n === 1) {
+        goInside();
+        say("CHAPTER 1", 3);
+        return;
+      }
+      questGiven = true;
+      countDone = true;
+      for (const c of cats) foundCats.add(c.name);
+      if (n === 2) {
+        scene = "inside";
+        snapCamera();
+        say("CHAPTER 2", 3);
+        return;
+      }
+      scene = "outside";
+      out.x = PACKAGE_SPOT.x + 2;
+      out.y = PACKAGE_SPOT.y - 2;
+      delivery = "unboxing";
+      unboxT = 0;
+      say("CHAPTER 3", 3);
+    });
+    const pickTitle = (c) => {
+      if (c === "play") startGame();
+      else if (c === "new") startGame(true);
+      else if (c === "ch1") startChapter(1);
+      else if (c === "ch2") startChapter(2);
+      else if (c === "ch3") startChapter(3);
+    };
     const startGame = (fresh = false) => fadeTo(() => {
       const s = fresh ? null : readSave();
-      if (fresh) try {
-        localStorage.removeItem(SAVE_KEY);
-      } catch {
+      if (fresh) {
+        resetProgress();
+        try {
+          localStorage.removeItem(SAVE_KEY);
+        } catch {
+        }
       }
       if (s) loadSave(s);
       scene = "outside";
@@ -3030,9 +3110,7 @@
     const interact = () => {
       if (busy) return;
       if (scene === "title") {
-        const c = opening.choose();
-        if (c === "play") startGame();
-        else if (c === "new") startGame(true);
+        pickTitle(opening.choose());
         return;
       }
       if (dlg) {
@@ -3550,9 +3628,7 @@
           }
           if (scene === "title") {
             if (busy) return;
-            const c = opening.touch(t.x, t.y);
-            if (c === "play") startGame();
-            else if (c === "new") startGame(true);
+            pickTitle(opening.touch(t.x, t.y));
           } else if (t.x >= DIALOG.x && t.x <= DIALOG.x + DIALOG.w && t.y >= DIALOG.y && t.y <= DIALOG.y + DIALOG.h) {
             if (asking()) dlg.ask.sel = t.x < DIALOG.x + DIALOG.w / 2 ? 0 : 1;
             interact();
