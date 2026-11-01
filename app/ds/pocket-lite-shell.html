@@ -181,6 +181,8 @@ canvas { display: block; width: calc(var(--u)*76); height: calc(var(--u)*57); im
    The device fills the viewport and each half of the DS takes exactly one half of the screen,
    so the hinge sits on the physical fold. Held tall: fold runs across (true DS clamshell).
    Held wide (book-style): left half is the top screen, right half is the touch screen + controls. */
+/* Behind the handheld when it fills the screen: Safari can leave a strip below the page (under its toolbar), so paint it the colour of the shell's bottom edge. */
+html.duo-fill, html.duo-fill body { background: var(--shell-lo); }
 .ds.duo { position: fixed; inset: 0; width: auto; height: auto; flex-direction: column; align-items: stretch; filter: none; background: var(--shell); z-index: 5; }
 .ds.duo.duo-row { flex-direction: row; }
 .ds.duo .shell { flex: 1 1 0; min-width: 0; min-height: 0; border-radius: 0; display: flex; align-items: center; justify-content: center; box-shadow: none; }
@@ -377,6 +379,7 @@ canvas { display: block; width: calc(var(--u)*76); height: calc(var(--u)*57); im
   function clearFrame() { for (const k of ["inset", "left", "top", "width", "height", "borderRadius", "overflow", "boxShadow"]) ds.style[k] = ""; }
   function fitDuo(row, fill) {
     ds.classList.add("duo");
+    document.documentElement.classList.toggle("duo-fill", fill);
     placeFrame(row, fill);
     ds.classList.toggle("duo-row", row);
     ds.classList.toggle("wide", !row);
@@ -414,6 +417,7 @@ canvas { display: block; width: calc(var(--u)*76); height: calc(var(--u)*57); im
     if (!params.has("classic")) return fitDuo(false, foldable || params.has("duo"));
     clearFrame();
     ds.classList.remove("duo", "duo-row");
+    document.documentElement.classList.remove("duo-fill");
     halves.forEach(([shell]) => shell.style.removeProperty("--u"));
     const cs = getComputedStyle(stage);
     const w = stage.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
