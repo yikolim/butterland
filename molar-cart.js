@@ -415,8 +415,7 @@
       y: 12.5,
       sheet: "./sprite-sheets/sashi-walk.png",
       behavior: "hide",
-      lines: ["\u2022Sashi looks up from Claire's letters.", "\u2022...Chirp. The handwriting is acceptable.", "\u2022She returns to her hiding place with great dignity."],
-      bolt: "\u2022Sashi no want pet, Sashi want big boobies."
+      lines: ["\u2022Sashi looks up from Claire's letters.", "\u2022...Chirp. The handwriting is acceptable.", "\u2022She returns to her hiding place with great dignity."]
     }
   ];
   var ENTRY = { x: 28, y: 31.6 };
@@ -3086,6 +3085,8 @@
       fadeTo(() => {
         scene = "inside";
         delivery = "waiting";
+        claire.dir = "down";
+        claire.frame = 1;
         notice = { title: "NEW PACKAGE!", lines: ["Claire got a new package!", "What is it?"], t: 0 };
         deliverySfx.notify();
       });
@@ -3287,7 +3288,7 @@
       if (showPkg && py <= wy - cy) pkg(g, px, py);
       const u = unboxT, unboxing = delivery === "unboxing", bx = wx - cx + 14, by = wy - cy + 1;
       const dancing = unboxing && u >= UNBOX.DANCE_START && u < UNBOX.DANCE_END;
-      const dir = dancing ? ["down", "left", "up", "right"][Math.floor((u - UNBOX.DANCE_START) * 5) % 4] : out.dir;
+      const dir = dancing ? "down" : out.dir;
       const hop = dancing ? -Math.round(Math.abs(Math.sin((u - UNBOX.DANCE_START) * 10)) * 5) : 0;
       g.fillStyle = "rgba(21,72,46,.45)";
       g.fillRect(sx + OUT_CELL * 0.3, sy + OUT_CELL * 0.82, OUT_CELL * 0.4, 3);
@@ -3564,6 +3565,23 @@
           truckT = at;
           dlg = null;
           truckHold = hold;
+        },
+        chapter(n) {
+          startChapter(n);
+        },
+        truck() {
+          fadeTo(() => {
+            resetProgress();
+            questGiven = true;
+            countDone = true;
+            for (const c of cats) foundCats.add(c.name);
+            scene = "delivery";
+            delivery = "cutscene";
+            truckT = 0;
+          });
+        },
+        leave() {
+          leaveHouse();
         }
       };
     }
