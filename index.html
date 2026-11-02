@@ -381,8 +381,12 @@ html.duo-fill, html.duo-fill body { background: var(--shell-lo); }
   // The iPhone Duo unfolded is about 1.42 : 1 (the frame uses 1.3). On a real foldable or tablet the handheld fills the
   // screen; anywhere else it sits in an upright frame of that ratio.
   const DUO_RATIO = 1.3;   // a touch wider than the Duo's 1.42, so the touch-screen row has room
+  // Safari can report a page shorter than the screen (the strip under its toolbar stays empty), so when the
+  // handheld fills the screen it takes the large viewport height (100lvh) whenever that is taller.
+  const lvhProbe = Object.assign(document.createElement("div"), { style: "position:fixed;left:0;top:0;width:0;height:100lvh;visibility:hidden;pointer-events:none" });
+  document.body.append(lvhProbe);
   function placeFrame(row, fill) {
-    const vw = innerWidth, vh = innerHeight;
+    const vw = innerWidth, vh = fill ? Math.max(innerHeight, lvhProbe.offsetHeight) : innerHeight;
     let fw = vw, fh = vh;
     if (!fill) {
       if (row) { fw = Math.min(vw, vh * DUO_RATIO); fh = fw / DUO_RATIO; }
@@ -467,6 +471,7 @@ html.duo-fill, html.duo-fill body { background: var(--shell-lo); }
   });
   navigator.devicePosture?.addEventListener?.("change", () => { if (navigator.devicePosture.type === "folded") closeLid(); else openLid(); });
   addEventListener("resize", fit);
+  window.visualViewport?.addEventListener("resize", fit);
   // rotating or unfolding can report the new size late, so also follow the page's real size
   if (window.ResizeObserver) new ResizeObserver(() => fit()).observe(document.documentElement);
   screen.orientation?.addEventListener?.("change", () => setTimeout(fit, 150));
